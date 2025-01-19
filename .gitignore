@@ -34,3 +34,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# experimental next js https
+certificates
+
+# database admin database
+database/pgadmin_data
+database/postgres_data
