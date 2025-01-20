@@ -3,3 +3,5 @@ export type User = {
   email: string;
   image: string | undefined | null;
 };
+
+export type Role = 'USER' | 'ADMIN' | 'OWNER';

@@ -2,9 +2,9 @@
 
 import { pool } from '@/lib/postgres';
 import { auth } from './authConfig';
-
+import { Role } from '@/types/auth';
 // Get the role from the postgres database based on the UUID in the users table
-export const getUserRole = async () => {
+export const getUserRole = async (): Promise<Role> => {
   const session = await auth();
   if (session && session.user) {
     const uuid = session.user.id;
@@ -23,6 +23,7 @@ export const getUserRole = async () => {
     if (!rows[0]?.role) {
       throw new Error('Role Not Found!');
     }
-    return rows[0].role;
+    return rows[0].role as Role;
   }
+  throw new Error('User not authenticated');
 };
