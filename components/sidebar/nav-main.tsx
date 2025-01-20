@@ -17,6 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
+import Link from 'next/link';
 
 export function NavMain({
   items,
@@ -37,11 +38,11 @@ export function NavMain({
       <SidebarGroupLabel>Utama</SidebarGroupLabel>
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton asChild>
-            <a href="/tryout">
+          <SidebarMenuButton asChild tooltip={'Tryout'}>
+            <Link href="/tryout">
               <BookOpenText />
               <span>Tryout</span>
-            </a>
+            </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
         {items.map((item) => (

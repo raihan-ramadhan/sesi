@@ -32,6 +32,7 @@ import {
 // 6. verification alert for google sigin because the emailVer is null
 // in account page add change name, upload profile pic (aws Storage), connect email user with google account,
 // 1. add search in dashboard / sideba
+// lihat security role base, apakah component masih diloat di client apa enggak (Check user dan role yg kita pakai saat ini adalah type client, cari yg server)
 
 import { getUser } from '@/lib/auth/getUserServerAction';
 import { getUserRole } from '@/lib/auth/getUserRoleServerAction';
@@ -63,13 +64,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     userInfo();
   }, []);
 
-  console.log(role);
-
   return (
     <Sidebar collapsible="icon" {...props}>
-      {/* <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
-      </SidebarHeader> */}
       <SidebarContent>
         <NavMain
           items={[
@@ -81,19 +77,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               items: [
                 {
                   title: 'SKB',
-                  url: '#',
+                  url: '/coming-soon?from=SKB',
                 },
                 {
                   title: 'PPPK',
-                  url: '#',
+                  url: '/coming-soon?from=PPPK',
                 },
                 {
                   title: 'BUMN',
-                  url: '#',
+                  url: '/coming-soon?from=BUMN',
                 },
                 {
                   title: 'UK',
-                  url: '#',
+                  url: '/coming-soon?from=UK',
                 },
               ],
             },
@@ -104,17 +100,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             list={[
               {
                 name: 'Submitted Question',
-                url: '#',
+                url: '/coming-soon?from=Submitted-Question',
                 icon: Frame,
               },
               {
                 name: 'Sales & Marketing',
-                url: '#',
+                url: '/coming-soon?from=Sales',
                 icon: PieChart,
               },
               {
                 name: 'Travel',
-                url: '#',
+                url: '/coming-soon?from=Travel',
                 icon: Map,
               },
             ]}
