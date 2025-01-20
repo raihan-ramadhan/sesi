@@ -18,7 +18,7 @@ export function SignInPage() {
                 className="size-3.5 fill-white"
               />
             </div>
-            Sesi App.
+            Sesi.
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-center">

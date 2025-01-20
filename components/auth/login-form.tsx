@@ -9,6 +9,7 @@ import { useTransition, useState } from 'react';
 import { handleGoogleSignIn } from '@/lib/auth/googleSignInServerAction';
 import { handleEmailSignIn } from '@/lib/auth/emailSignInServerAction';
 import { MailOpen } from 'lucide-react';
+// import Link from 'next/link';
 
 export function LoginForm({
   className,
@@ -106,6 +107,13 @@ export function LoginForm({
           Masuk dengan Google
         </Button>
       </div>
+
+      {/* TODO : ADD /auth/terms-of-service-and-privacy-policy.tsx page */}
+      {/* <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
+        By clicking continue, you agree to our{' '}
+        <Link href="/auth/terms-of-service-and-privacy-policy">Terms of Service</Link> and{' '}
+        <Link href="/auth/terms-of-service-and-privacy-policy">Privacy Policy</Link>.
+      </div> */}
     </form>
   );
 }
