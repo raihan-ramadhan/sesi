@@ -12,6 +12,17 @@ body {
   }
 }
 
+@layer components {
+  .loading-state {
+    @apply animate-pulse bg-secondary;
+  }
+  .loading-state-empty-div {
+    /* I got error if use @apply content-[' '] for unknown reason*/
+    content: ' ';
+    @apply animate-pulse rounded-md w-full h-3 bg-secondary;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

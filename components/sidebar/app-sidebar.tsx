@@ -27,12 +27,13 @@ import {
 } from '@/components/ui/sidebar';
 
 // TODO :
-// add pop up collapsible icon untuk tryout
-// - add loading state in dropdown user
-// 6. verification alert for google sigin because the emailVer is null
 // in account page add change name, upload profile pic (aws Storage), connect email user with google account,
-// 1. add search in dashboard / sideba
 // lihat security role base, apakah component masih diloat di client apa enggak (Check user dan role yg kita pakai saat ini adalah type client, cari yg server)
+// Perbaiki logo svgk kita yg rusak
+
+// TODO FITUR BESAR
+// - add search in dashboard / sidebar
+// - verification alert for google sigin because the emailVer is null
 
 import { getUser } from '@/lib/auth/getUserServerAction';
 import { getUserRole } from '@/lib/auth/getUserRoleServerAction';

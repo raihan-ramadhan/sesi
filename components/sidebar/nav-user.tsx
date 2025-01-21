@@ -26,8 +26,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { handleSignOut } from '@/lib/auth/signOutServerAction';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export function NavUser({
   user,
@@ -49,17 +49,36 @@ export function NavUser({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar
+                className={cn(
+                  'h-8 w-8 rounded-lg',
+                  !user.avatar && 'loading-state',
+                )}
+              >
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="rounded-lg">
                   {fallback}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                {user.email ? (
+                  <>
+                    <span className="truncate font-semibold">{user.name}</span>
+                    <span className="truncate text-xs">{user.email}</span>
+                  </>
+                ) : (
+                  <>
+                    <div className="loading-state-empty-div" />
+                    <div className="loading-state-empty-div mt-1" />
+                  </>
+                )}
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <ChevronsUpDown
+                className={cn(
+                  'ml-auto size-4',
+                  !user.email && 'animate-pulse text-secondary-foreground',
+                )}
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
