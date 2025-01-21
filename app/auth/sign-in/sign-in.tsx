@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { LoginForm } from '@/components/auth/login-form';
 import Link from 'next/link';
+import { GradientOverlay } from '@/components/gradient-overlay';
 
 export function SignInPage() {
   return (
@@ -36,7 +37,7 @@ export function SignInPage() {
           alt="Picture of BKN Office"
           className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale bg-secondary-forground"
         />
-        <div className="content-[''] absolute inset-0 bg-gradient-to-t from-primary to-secondary-foreground opacity-40" />
+        <GradientOverlay />
       </div>
     </div>
   );

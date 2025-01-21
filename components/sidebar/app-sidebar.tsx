@@ -3,16 +3,13 @@
 import { useEffect, useState } from 'react';
 
 import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
+  BookOpenText,
   ChartSpline,
-  Command,
   Frame,
-  GalleryVerticalEnd,
+  LayoutDashboard,
   Map,
+  PencilRuler,
   PieChart,
-  Settings2,
   SquareTerminal,
 } from 'lucide-react';
 
@@ -27,13 +24,9 @@ import {
 } from '@/components/ui/sidebar';
 
 // TODO :
-// in account page add change name, upload profile pic (aws Storage), connect email user with google account,
 // lihat security role base, apakah component masih diloat di client apa enggak (Check user dan role yg kita pakai saat ini adalah type client, cari yg server)
 // Perbaiki logo svgk kita yg rusak
-
-// TODO FITUR BESAR
-// - add search in dashboard / sidebar
-// - verification alert for google sigin because the emailVer is null
+// Check apakah ga bisa dapat info dari data yg di pakai di server rendering, karna liat data dari navUser dan nav admin dan nav owner kita yg flicker
 
 import { getUser } from '@/lib/auth/getUserServerAction';
 import { getUserRole } from '@/lib/auth/getUserRoleServerAction';
@@ -41,7 +34,10 @@ import { Role, User } from '@/types/auth';
 import { NavOwner } from './nav-owner';
 import { checkIsRoleAllowed } from '@/lib/auth/checkIsRoleAllowed';
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  hiddenUser,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { hiddenUser?: boolean }) {
   const [role, setRole] = useState<Role>('USER');
   const [user, setUser] = useState<User>({
     name: '',
@@ -71,6 +67,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain
           items={[
             {
+              title: 'Dashboard',
+              url: '/dashboard',
+              icon: LayoutDashboard,
+            },
+            {
+              title: 'Tryout',
+              url: '/coming-soon?from=tryout',
+              icon: BookOpenText,
+            },
+            {
               title: 'Paket',
               url: '/paket',
               icon: SquareTerminal,
@@ -93,6 +99,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   url: '/coming-soon?from=UK',
                 },
               ],
+            },
+            {
+              title: 'Pembelajaran Saya',
+              url: '/coming-soon?from=my-learning',
+              icon: PencilRuler,
             },
           ]}
         />
@@ -129,15 +140,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           />
         ) : null}
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser
-          user={{
-            name: user.name ?? '',
-            email: user.email,
-            avatar: user.image ?? '',
-          }}
-        />
-      </SidebarFooter>
+      {hiddenUser ? null : (
+        <SidebarFooter>
+          <NavUser
+            user={{
+              name: user.name ?? '',
+              email: user.email,
+              avatar: user.image ?? '',
+            }}
+          />
+        </SidebarFooter>
+      )}
+
       <SidebarRail />
     </Sidebar>
   );
