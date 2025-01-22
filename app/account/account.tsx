@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useSession } from 'next-auth/react';
 
 // update user
 // use initial data from server component for get role, so the nav-admin-owner not got flicker, and the user intial in nav-user and account page not got flicker
@@ -45,14 +46,8 @@ export const AccountPage: React.FC = () => {
   const [role, setRole] = useState<Role>('USER');
   const [isPending, startTransition] = useTransition();
   const bannerHeight = 'h-48 ';
-  const [user, setUser] = useState<
-    User & {
-      banner: string;
-      phoneNumber: string;
-      gender?: 'WANITA' | 'PRIA' | 'MEMILIH_TIDAK_UNTUK_DIKATAKAN' | null;
-      address: string;
-    }
-  >({
+  const { update } = useSession();
+  const [user, setUser] = useState<User>({
     name: '',
     email: '',
     image: '',
@@ -98,7 +93,7 @@ export const AccountPage: React.FC = () => {
     event.preventDefault(); // Prevents the form from submitting and reloading the page, allowing us to handle the submission in TypeScript.
     try {
       startTransition(async () => {
-        // await handleEmailSignIn(formData.email);
+        update(user);
       });
     } catch (error) {
       console.error(error);
@@ -257,7 +252,7 @@ export const AccountPage: React.FC = () => {
                 maxLength={320}
                 placeholder="Domisili"
                 onChange={(e) =>
-                  setUser((prev) => ({ ...prev, domisili: e.target.value }))
+                  setUser((prev) => ({ ...prev, address: e.target.value }))
                 }
                 type="text"
                 value={user.address ?? ''}
@@ -277,7 +272,7 @@ export const AccountPage: React.FC = () => {
                   setUser((prev) => ({ ...prev, phoneNumber: e.target.value }))
                 }
                 type="text"
-                value={user.phone ?? ''}
+                value={user.phoneNumber ?? ''}
                 disabled={isPending}
                 required
               />
