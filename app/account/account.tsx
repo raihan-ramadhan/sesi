@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Update postgres-schema.sql, alter query for user
+// update user
 // use initial data from server component for get role, so the nav-admin-owner not got flicker, and the user intial in nav-user and account page not got flicker
 // verification email / gmail,
 // - verification alert for google sigin because the emailVer is null OR  connect email user with google account,
@@ -48,8 +48,8 @@ export const AccountPage: React.FC = () => {
   const [user, setUser] = useState<
     User & {
       banner: string;
-      phone: string;
-      gender?: 'WANITA' | 'PRIA' | 'HIDDEN' | null;
+      phoneNumber: string;
+      gender?: 'WANITA' | 'PRIA' | 'MEMILIH_TIDAK_UNTUK_DIKATAKAN' | null;
       address: string;
     }
   >({
@@ -57,7 +57,7 @@ export const AccountPage: React.FC = () => {
     email: '',
     image: '',
     banner: '',
-    phone: '',
+    phoneNumber: '',
     gender: null,
     address: '',
   });
@@ -266,15 +266,15 @@ export const AccountPage: React.FC = () => {
               />
             </div>
 
-            {/* Phone Input */}
+            {/* Phone Number Input */}
             <div className="grid gap-2">
-              <Label htmlFor="phone">No telp</Label>
+              <Label htmlFor="phoneNumber">No telp</Label>
               <Input
-                id="phone"
+                id="phoneNumber"
                 maxLength={320}
-                placeholder="No telp Address"
+                placeholder="08- Atau 628-"
                 onChange={(e) =>
-                  setUser((prev) => ({ ...prev, domisili: e.target.value }))
+                  setUser((prev) => ({ ...prev, phoneNumber: e.target.value }))
                 }
                 type="text"
                 value={user.phone ?? ''}

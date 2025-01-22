@@ -1,5 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TYPE AuthRole AS ENUM ('USER', 'ADMIN', 'OWNER');
+CREATE TYPE GenderModel AS ENUM ('PRIA', 'WANITA', 'MEMILIH_TIDAK_UNTUK_DIKATAKAN')
 
 CREATE TABLE
   users (
@@ -9,6 +10,10 @@ CREATE TABLE
     "emailVerified" TIMESTAMPTZ,
     image TEXT,
     role AuthRole NOT NULL DEFAULT 'USER',
+    gender GenderModel,
+    banner TEXT,
+    "phoneNumber" VARCHAR(20),
+    address VARCHAR(255),
     PRIMARY KEY (id)
   );
 
