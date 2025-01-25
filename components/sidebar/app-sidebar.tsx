@@ -28,11 +28,9 @@ import {
 // Perbaiki logo svgk kita yg rusak
 // Check apakah ga bisa dapat info dari data yg di pakai di server rendering, karna liat data dari navUser dan nav admin dan nav owner kita yg flicker
 
-import { getUser } from '@/lib/auth/getUserServerAction';
-import { getUserRole } from '@/lib/auth/getUserRoleServerAction';
 import { Role, User } from '@/types/auth';
 import { NavOwner } from './nav-owner';
-import { checkIsRoleAllowed } from '@/lib/auth/checkIsRoleAllowed';
+import { createClient } from '@/utils/supabase/client';
 
 export function AppSidebar({
   hiddenUser,
@@ -42,25 +40,24 @@ export function AppSidebar({
   const [user, setUser] = useState<User>({
     name: '',
     email: '',
-    image: '',
+    avatarUrl: '',
   });
 
   useEffect(() => {
-    const userInfo = async () => {
-      const user = await getUser();
-      if (user) {
-        setUser(user);
-      }
+    async function getUser() {
+      const supabase = await createClient();
+      const { error, data } = await supabase.auth.getUser();
 
-      const role = await getUserRole();
-      if (role) {
-        setRole(role);
+      if (error || !data?.user) {
+        console.log("User doesn't exists");
+      } else {
+        const { avatar_url, name, email } = data.user.user_metadata;
+        setUser({ avatarUrl: avatar_url, email, name });
       }
-    };
-
-    userInfo();
+    }
+    getUser();
   }, []);
-
+  console.log(user);
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarContent>
@@ -107,7 +104,7 @@ export function AppSidebar({
             },
           ]}
         />
-        {checkIsRoleAllowed({ userRole: role, roleComponent: 'ADMIN' }) ? (
+        {true ? (
           <NavAdmin
             list={[
               {
@@ -128,7 +125,7 @@ export function AppSidebar({
             ]}
           />
         ) : null}
-        {checkIsRoleAllowed({ userRole: role, roleComponent: 'OWNER' }) ? (
+        {true ? (
           <NavOwner
             projects={[
               {
@@ -146,7 +143,7 @@ export function AppSidebar({
             user={{
               name: user.name ?? '',
               email: user.email,
-              avatar: user.image ?? '',
+              avatar: user.avatarUrl ?? '',
             }}
           />
         </SidebarFooter>

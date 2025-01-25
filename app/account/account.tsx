@@ -1,10 +1,5 @@
 'use client';
 
-import { getUser } from '@/lib/auth/getUserServerAction';
-import { getUserRole } from '@/lib/auth/getUserRoleServerAction';
-// import { getAccountLinkStatus } from '@/lib/auth/getAccountLinkStatusServerAction';
-// import { handleGoogleSignIn } from '@/lib/auth/googleSignInServerAction';
-// import { unlinkGoogleAccount } from '@/lib/auth/unlinkGoogleAccountServerAction';
 import { useEffect, useState, useTransition } from 'react';
 import { Role, User } from '@/types/auth';
 import { AppSidebar } from '@/components/sidebar/app-sidebar';
@@ -22,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ImageUp, SaveIcon, Upload } from 'lucide-react';
+import { ImageUp, SaveIcon } from 'lucide-react';
 import Image from 'next/image';
 import { GradientOverlay } from '@/components/gradient-overlay';
 import { cn } from '@/lib/utils';
@@ -35,18 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useSession } from 'next-auth/react';
-
-// update user
-// use initial data from server component for get role, so the nav-admin-owner not got flicker, and the user intial in nav-user and account page not got flicker
-// verification email / gmail,
-// - verification alert for google sigin because the emailVer is null OR  connect email user with google account,
 
 export const AccountPage: React.FC = () => {
   const [role, setRole] = useState<Role>('USER');
   const [isPending, startTransition] = useTransition();
   const bannerHeight = 'h-48 ';
-  const { update } = useSession();
   const [user, setUser] = useState<User>({
     name: '',
     email: '',
@@ -56,22 +44,6 @@ export const AccountPage: React.FC = () => {
     gender: null,
     address: '',
   });
-
-  useEffect(() => {
-    const userInfo = async () => {
-      const user = await getUser();
-      if (user) {
-        setUser(user);
-      }
-
-      const role = await getUserRole();
-      if (role) {
-        setRole(role);
-      }
-    };
-
-    userInfo();
-  }, []);
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -93,7 +65,7 @@ export const AccountPage: React.FC = () => {
     event.preventDefault(); // Prevents the form from submitting and reloading the page, allowing us to handle the submission in TypeScript.
     try {
       startTransition(async () => {
-        update(user);
+        // update(user);
       });
     } catch (error) {
       console.error(error);

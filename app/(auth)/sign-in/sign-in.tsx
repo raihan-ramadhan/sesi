@@ -24,7 +24,7 @@ export function SignInPage() {
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
-            <LoginForm />{' '}
+            <LoginForm />
           </div>
         </div>
       </div>

@@ -6,10 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useTransition, useState } from 'react';
-import { handleGoogleSignIn } from '@/lib/auth/googleSignInServerAction';
-import { handleEmailSignIn } from '@/lib/auth/emailSignInServerAction';
 import { MailOpen } from 'lucide-react';
 // import Link from 'next/link';
+import { signInWithGoogle } from '@/actions/auth';
 
 export function LoginForm({
   className,
@@ -22,11 +21,17 @@ export function LoginForm({
     event.preventDefault(); // Prevents the form from submitting and reloading the page, allowing us to handle the submission in TypeScript.
     try {
       startTransition(async () => {
-        await handleEmailSignIn(formData.email);
+        // await handleEmailSignIn(formData.email);
       });
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    startTransition(async () => {
+      await signInWithGoogle();
+    });
   };
 
   return (
@@ -66,7 +71,7 @@ export function LoginForm({
         </div>
         <Button
           variant="outline"
-          onClick={() => handleGoogleSignIn()}
+          onClick={handleGoogleLogin}
           className="w-full"
           type="button"
         >

@@ -25,9 +25,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { handleSignOut } from '@/lib/auth/signOutServerAction';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { signOut } from '@/actions/auth';
 
 export function NavUser({
   user,
@@ -40,6 +41,14 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const fallback = (user.name?.[0] ?? user.email[0])?.toUpperCase();
+  const [loading, setLoading] = useState(false);
+
+  const handleLogout = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    await signOut();
+    setLoading(false);
+  };
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -126,7 +135,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleSignOut()}>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>
