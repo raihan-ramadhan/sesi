@@ -7,24 +7,29 @@ import { Label } from '@/components/ui/label';
 
 import { useTransition, useState } from 'react';
 import { MailOpen } from 'lucide-react';
-// import Link from 'next/link';
-import { signInWithGoogle } from '@/actions/auth';
+import { sendMagicLink, signInWithGoogle } from '@/actions/auth';
+import { useRouter } from 'next/navigation';
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<'form'>) {
   const [isPending, startTransition] = useTransition();
-  const [formData, setFormData] = useState({ email: '' as string });
+  const [email, setEmail] = useState('');
+  const router = useRouter();
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); // Prevents the form from submitting and reloading the page, allowing us to handle the submission in TypeScript.
-    try {
-      startTransition(async () => {
-        // await handleEmailSignIn(formData.email);
-      });
-    } catch (error) {
-      console.error(error);
+    const formData = new FormData(event.currentTarget);
+    let response = { status: '' };
+    startTransition(async () => {
+      response = await sendMagicLink(formData);
+    });
+
+    if (response.status !== 'success') {
+      router.push('/auth-success');
+    } else {
+      router.push('/auth-error');
     }
   };
 
@@ -51,12 +56,14 @@ export function LoginForm({
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
+            name="email"
             type="email"
             maxLength={320}
             placeholder="Email Address"
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              setFormData({ email: event.target.value })
+              setEmail(event.target.value)
             }
+            value={email}
             disabled={isPending}
             required
           />
