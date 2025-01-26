@@ -1,4 +1,5 @@
 import { CircleCheck } from 'lucide-react';
+import { SendLinkAgain } from './SendLinkAgain';
 
 const AuthSuccessPage: React.FC = () => {
   return (
@@ -11,17 +12,7 @@ const AuthSuccessPage: React.FC = () => {
           </p>
         </div>
         <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600">
-            {
-              "Didn't receive an email? To go back to the sign-in page and try again, "
-            }
-            <a
-              href="/api/auth/signin"
-              className="text-blue-500 hover:underline"
-            >
-              Click Here
-            </a>
-          </p>
+          <SendLinkAgain />
         </div>
       </div>
     </div>

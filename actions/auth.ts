@@ -162,14 +162,13 @@ export async function signInWithGoogle() {
 //   return { status: 'success' };
 // }
 
-export async function sendMagicLink(formData: FormData) {
+export async function sendMagicLink(formData: FormData | string) {
   const supabase = await createClient();
+  const email =
+    typeof formData === 'string' ? formData : (formData.get('email') as string);
 
-  const credentials = {
-    email: formData.get('email') as string,
-  };
-  const { error, data } = await supabase.auth.signInWithOtp({
-    email: credentials.email,
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email,
   });
 
   if (error) {

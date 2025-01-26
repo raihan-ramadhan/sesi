@@ -27,7 +27,7 @@ export function LoginForm({
     });
 
     if (response.status !== 'success') {
-      router.push('/auth-success');
+      router.push(`/auth-success?email=${formData.get('email')}`);
     } else {
       router.push('/auth-error');
     }
