@@ -88,7 +88,7 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    redirect('/error');
+    redirect('/auth-error');
   }
 
   revalidatePath('/', 'layout');
@@ -117,9 +117,9 @@ export async function signInWithGoogle() {
       redirectTo: `${origin}/auth/callback`,
     },
   });
-  console.log('DATA', data, 'ERROR', error);
+
   if (error) {
-    redirect('/error');
+    redirect('/auth-error');
   } else if (data.url) {
     return redirect(data.url);
   }

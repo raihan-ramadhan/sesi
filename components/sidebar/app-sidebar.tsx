@@ -57,7 +57,7 @@ export function AppSidebar({
     }
     getUser();
   }, []);
-  console.log(user);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarContent>
