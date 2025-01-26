@@ -88,7 +88,7 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    redirect('/auth-error');
+    redirect(`/auth-error?message=${error.message}`);
   }
 
   revalidatePath('/', 'layout');
@@ -119,7 +119,7 @@ export async function signInWithGoogle() {
   });
 
   if (error) {
-    redirect('/auth-error');
+    redirect(`/auth-error?message=${error.message}`);
   } else if (data.url) {
     return redirect(data.url);
   }

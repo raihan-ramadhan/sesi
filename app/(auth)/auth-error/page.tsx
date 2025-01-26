@@ -1,16 +1,23 @@
 import Link from 'next/link';
 import { TriangleAlert } from 'lucide-react';
 
-const AuthErrorPage: React.FC = () => {
+export default function AuthErrorPage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | undefined>;
+}) {
+  const { message } = searchParams;
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-red-100">
-      <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-        <div className="flex items-center space-x-2 mb-4">
+      <div className="bg-white rounded-lg shadow-lg text-center p-4">
+        <div className="flex items-center space-x-2">
           <TriangleAlert className="text-red-500 w-6 h-6" />
           <p className="text-red-500 font-semibold">
             {'Oops, something went wrong when signing.'}
           </p>
         </div>
+        <p className="text-red-500 font-semibold">{message}</p>
         <div>
           <p className="text-gray-700">
             {'To go back to the sign in page, '}
@@ -25,6 +32,4 @@ const AuthErrorPage: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default AuthErrorPage;
+}
