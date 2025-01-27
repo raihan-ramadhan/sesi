@@ -31,7 +31,6 @@ export async function GET(request: Request) {
         const payload = {
           email: data?.user?.email,
           username: data?.user?.user_metadata?.name,
-          avatarUrl: data.user?.user_metadata.avatar_url,
         };
         // create user_profiles
         const { error: insertError } = await supabase
@@ -42,34 +41,16 @@ export async function GET(request: Request) {
           console.log('Error inserting user data', insertError.message);
           return NextResponse.redirect(`${origin}/auth-error`);
         }
-      } else {
-        if (!existingUser?.username) {
-          // update user that not have username bc they logged in with email
-          const { error: updateUsernameError } = await supabase
-            .from('user_profiles')
-            .update({ username: data?.user?.user_metadata?.name })
-            .eq('email', data.user?.email);
+      } else if (!existingUser?.username) {
+        // update user that not have username bc they logged in with email
+        const { error: updateUsernameError } = await supabase
+          .from('user_profiles')
+          .update({ username: data?.user?.user_metadata?.name })
+          .eq('email', data.user?.email);
 
-          if (updateUsernameError) {
-            console.log('Error updating username', updateUsernameError.message);
-            return NextResponse.redirect(`${origin}/auth-error`);
-          }
-        }
-
-        if (!existingUser?.avatarUrl) {
-          // update user that not have avatarUrl bc they logged in with email
-          const { error: updateAvatarError } = await supabase
-            .from('user_profiles')
-            .update({ avatarUrl: data.user?.user_metadata.avatar_url })
-            .eq('email', data.user?.email);
-
-          if (updateAvatarError) {
-            console.log(
-              'Error updating avatarUrl data',
-              updateAvatarError.message,
-            );
-            return NextResponse.redirect(`${origin}/auth-error`);
-          }
+        if (updateUsernameError) {
+          console.log('Error updating username', updateUsernameError.message);
+          return NextResponse.redirect(`${origin}/auth-error`);
         }
       }
       const forwardedHost = request.headers.get('x-forwarded-host'); // original origin before load balancer

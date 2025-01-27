@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-
+import { z } from 'zod';
 // export async function signUp(formData: FormData) {
 //   const supabase = await createClient();
 
@@ -162,20 +162,44 @@ export async function signInWithGoogle() {
 //   return { status: 'success' };
 // }
 
-export async function sendMagicLink(formData: FormData | string) {
-  const supabase = await createClient();
-  const email =
-    typeof formData === 'string' ? formData : (formData.get('email') as string);
+const schemaSendMagicLink = z.object({
+  email: z.string({
+    invalid_type_error: 'Invalid Email',
+  }),
+});
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email: email,
+export async function sendMagicLink(formData: FormData) {
+  const validatedFields = schemaSendMagicLink.safeParse({
+    email: formData.get('email'),
   });
 
+  // Return early if the form data is invalid
+  if (!validatedFields.success) {
+    return redirect(
+      `/auth-error?message=${validatedFields.error.flatten().fieldErrors}`,
+    );
+  }
+
+  const supabase = await createClient();
+  const email = formData?.get('email') as string;
+
+  const { error } = await supabase.auth.signInWithOtp({ email });
+
   if (error) {
-    return {
-      status: error.message,
-      user: null,
-    };
+    return redirect(`/auth-error?message=${error.message}`);
+  }
+  return redirect(`/auth-success?email=${formData.get('email')}`);
+}
+
+export async function resendMagicLinkAction(email: string) {
+  if (!email) return { status: 'error' };
+
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithOtp({ email });
+
+  if (error) {
+    return { status: 'error', message: error.message };
   }
   return { status: 'success' };
 }

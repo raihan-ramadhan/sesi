@@ -1,5 +1,5 @@
 import { CircleCheck } from 'lucide-react';
-import { SendLinkAgain } from './SendLinkAgain';
+import { ResendMagicLink } from './ResendMagicLink';
 
 const AuthSuccessPage: React.FC = () => {
   return (
@@ -12,7 +12,7 @@ const AuthSuccessPage: React.FC = () => {
           </p>
         </div>
         <div className="mt-4 text-center">
-          <SendLinkAgain />
+          <ResendMagicLink />
         </div>
       </div>
     </div>

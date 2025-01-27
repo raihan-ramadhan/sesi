@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { useTransition, useState } from 'react';
 import { MailOpen } from 'lucide-react';
 import { sendMagicLink, signInWithGoogle } from '@/actions/auth';
-import { useRouter } from 'next/navigation';
 
 export function LoginForm({
   className,
@@ -16,22 +15,6 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<'form'>) {
   const [isPending, startTransition] = useTransition();
   const [email, setEmail] = useState('');
-  const router = useRouter();
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault(); // Prevents the form from submitting and reloading the page, allowing us to handle the submission in TypeScript.
-    const formData = new FormData(event.currentTarget);
-    let response = { status: '' };
-    startTransition(async () => {
-      response = await sendMagicLink(formData);
-    });
-
-    if (response.status !== 'success') {
-      router.push(`/auth-success?email=${formData.get('email')}`);
-    } else {
-      router.push('/auth-error');
-    }
-  };
 
   const handleGoogleLogin = () => {
     startTransition(async () => {
@@ -41,7 +24,7 @@ export function LoginForm({
 
   return (
     <form
-      onSubmit={handleSubmit}
+      action={sendMagicLink}
       className={cn('flex flex-col gap-6', className)}
       {...props}
     >
