@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { TriangleAlert } from 'lucide-react';
 
-export default function AuthErrorPage({
+export default async function AuthErrorPage({
   searchParams,
 }: {
-  searchParams: Record<string, string | undefined>;
+  searchParams: Promise<{ message?: string }>;
 }) {
-  const { message } = searchParams;
+  const { message } = await searchParams;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-red-100">

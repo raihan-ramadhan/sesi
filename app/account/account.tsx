@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import { Role, User } from '@/types/auth';
+import { GENDER_VALUES, Role, User } from '@/types/auth';
 import { AppSidebar } from '@/components/sidebar/app-sidebar';
 import {
   Breadcrumb,
@@ -17,10 +17,10 @@ import {
 } from '@/components/ui/sidebar';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { ImageUp, SaveIcon } from 'lucide-react';
+import { ImageUp, SaveIcon, UserRound } from 'lucide-react';
 import Image from 'next/image';
 import { GradientOverlay } from '@/components/gradient-overlay';
-import { cn } from '@/lib/utils';
+import { cn, toProperCase } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -30,20 +30,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { updateAccountData } from '@/actions/account';
+import { useFormStatus } from 'react-dom';
+import { useToast } from '@/hooks/use-toast';
 
-export const AccountPage: React.FC = () => {
+export const AccountPage = ({ initialData }: { initialData: User }) => {
   const [role, setRole] = useState<Role>('USER');
-  const [isPending, startTransition] = useTransition();
   const bannerHeight = 'h-48 ';
-  const [user, setUser] = useState<User>({
-    name: '',
-    email: '',
-    image: '',
-    banner: '',
-    phoneNumber: '',
-    gender: null,
-    address: '',
-  });
+  const [user, setUser] = useState<User>(initialData);
+  const { pending } = useFormStatus();
+  const { toast } = useToast();
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -61,20 +57,14 @@ export const AccountPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault(); // Prevents the form from submitting and reloading the page, allowing us to handle the submission in TypeScript.
-    try {
-      startTransition(async () => {
-        // update(user);
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  function properValue(value: string) {
+    const newValue = toProperCase(value.replaceAll('_', ' '));
+    return newValue;
+  }
 
   return (
     <SidebarProvider>
-      <AppSidebar hiddenUser={true} />
+      <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
@@ -95,7 +85,32 @@ export const AccountPage: React.FC = () => {
             </Breadcrumb>
           </div>
         </header>
-        <form onSubmit={handleSubmit}>
+
+        {/* FORM */}
+        <form
+          action={async (formData) => {
+            const { status, message, data } = await updateAccountData({
+              oldData: initialData,
+              formData,
+            });
+
+            if (status == 'success' && data) {
+              toast({
+                title: 'Sukses!',
+                description: 'Kamu berhasil mengupdate data akun kamu',
+              });
+
+              setUser(data);
+            } else if (message) {
+              toast({
+                variant: 'destructive',
+                title: 'Gagal!',
+                description:
+                  (message as string) || 'terjadi Kesalahan saat mengupdate!',
+              });
+            }
+          }}
+        >
           <div className="grid gap-6 mx-auto p-4">
             {/* BANNER Image*/}
             <div
@@ -105,7 +120,7 @@ export const AccountPage: React.FC = () => {
               )}
             >
               <Image
-                src={user.banner ?? '/default-banner-1.webp'}
+                src={'/default-banner-1.webp'}
                 alt="Cover"
                 fill
                 className="object-cover"
@@ -116,13 +131,18 @@ export const AccountPage: React.FC = () => {
 
               {/* Upload Banner Image Button */}
               <div
-                onClick={() => document.getElementById('banner')?.click()}
-                className="absolute bottom-2 right-2 flex bg-black bg-opacity-20 p-2 rounded-sm backdrop-blur-sm text-white text-xs justify-center items-center gap-1 hover:bg-opacity-40 cursor-pointer transition-colors duration-200 select-none"
+                onClick={() => {
+                  if (!pending) document.getElementById('bannerUrl')?.click();
+                }}
+                className={cn(
+                  'absolute bottom-2 right-2 flex bg-black bg-opacity-20 p-2 rounded-sm backdrop-blur-sm text-white text-xs justify-center items-center gap-1 hover:bg-opacity-40 cursor-pointer transition-colors duration-200 select-none',
+                  pending && 'cursor-progress',
+                )}
               >
                 <ImageUp className="size-4" />
                 Add a banner image
                 <input
-                  id="banner"
+                  id="bannerUrl"
                   type="file"
                   onChange={handleCoverImageChange}
                   className="hidden"
@@ -136,22 +156,35 @@ export const AccountPage: React.FC = () => {
             >
               <div className="relative left-0 bottom-0 w-48 h-48">
                 <div className="flex items-center absolute left-10 -bottom-1/2 -translate-y-1/2">
-                  <div className="flex items-center gap-4 ">
-                    <img
-                      src={user.image ?? ''}
-                      alt="Profile"
-                      className="w-24 h-24 rounded-full object-cover"
-                    />
+                  <div className="flex items-center gap-4">
+                    {user.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl ?? ''}
+                        alt="Profile"
+                        className="w-24 h-24 rounded-full object-cover shadow-md"
+                      />
+                    ) : (
+                      <div className="rounded-full w-24 h-24 bg-secondary flex justify-center items-center shadow-md">
+                        <UserRound className="w-12 h-12" />
+                      </div>
+                    )}
 
                     {/* Upload Profile Image Button */}
                     <div
-                      onClick={() => document.getElementById('image')?.click()}
-                      className="flex bg-black bg-opacity-40 p-2 rounded-sm backdrop-blur-sm text-white text-xs justify-center items-center gap-1 hover:bg-opacity-60 cursor-pointer transition-colors duration-200 select-none"
+                      onClick={() => {
+                        if (!pending)
+                          document.getElementById('avatarUrl')?.click();
+                      }}
+                      className={cn(
+                        'flex bg-black bg-opacity-40 p-2 rounded-sm backdrop-blur-sm text-white text-xs justify-center items-center gap-1 hover:bg-opacity-60 cursor-pointer transition-colors duration-200 select-none shadow-md',
+                        pending && 'cursor-progress',
+                      )}
                     >
                       <ImageUp className="size-4" />
                       Ubah
                       <input
-                        id="image"
+                        id="avatarUrl"
+                        disabled={pending}
                         type="file"
                         onChange={handleProfilePicChange}
                         className="hidden"
@@ -164,52 +197,48 @@ export const AccountPage: React.FC = () => {
 
             {/* Name Input */}
             <div className="grid gap-2 mt-12">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="username">Name</Label>
               <Input
-                id="name"
+                id="username"
+                name="username"
                 maxLength={320}
                 placeholder="Nama"
                 onChange={(e) =>
                   setUser((prev) => ({ ...prev, name: e.target.value }))
                 }
                 type="text"
-                value={user.name ?? ''}
-                disabled={isPending}
+                defaultValue={user.username ?? ''}
+                disabled={pending}
                 required
               />
             </div>
 
-            {/* Email Input */}
+            {/* Email  */}
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                maxLength={320}
-                placeholder="Email"
-                onChange={(e) =>
-                  setUser((prev) => ({ ...prev, email: e.target.value }))
-                }
-                type="text"
-                value={user.email ?? ''}
-                disabled={isPending}
-                required
-              />
+              <Label>Email</Label>
+              <div className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm  md:text-sm items-center">
+                <p className="cursor-default">{user.email}</p>
+              </div>
             </div>
 
             {/* Gender Select*/}
             <div className="grid gap-2">
               <Label htmlFor="gender">Jenis Kelamin</Label>
-              <Select>
-                <SelectTrigger className="w-[320px]">
+              <Select defaultValue={user.gender ?? ''} name="gender">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih jenis kelamin" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Jenis Kelamin</SelectLabel>
-                    <SelectItem value="pria">Pria</SelectItem>
-                    <SelectItem value="wanita">Wanita</SelectItem>
-                    <SelectItem value="none-spcecify">
-                      Tidak Ingin Menyebutkan
+                    <SelectItem value={GENDER_VALUES['0']}>
+                      {properValue(GENDER_VALUES['0'])}
+                    </SelectItem>
+                    <SelectItem value={GENDER_VALUES['1']}>
+                      {properValue(GENDER_VALUES['1'])}
+                    </SelectItem>
+                    <SelectItem value={GENDER_VALUES['2']}>
+                      {properValue(GENDER_VALUES['2'])}
                     </SelectItem>
                   </SelectGroup>
                 </SelectContent>
@@ -221,6 +250,7 @@ export const AccountPage: React.FC = () => {
               <Label htmlFor="address">Domisili</Label>
               <Input
                 id="address"
+                name="address"
                 maxLength={320}
                 placeholder="Domisili"
                 onChange={(e) =>
@@ -228,13 +258,12 @@ export const AccountPage: React.FC = () => {
                 }
                 type="text"
                 value={user.address ?? ''}
-                disabled={isPending}
-                required
+                disabled={pending}
               />
             </div>
 
             {/* Phone Number Input */}
-            <div className="grid gap-2">
+            {/* <div className="grid gap-2">
               <Label htmlFor="phoneNumber">No telp</Label>
               <Input
                 id="phoneNumber"
@@ -248,7 +277,7 @@ export const AccountPage: React.FC = () => {
                 disabled={isPending}
                 required
               />
-            </div>
+            </div> */}
 
             {/* Submit Button */}
             <button

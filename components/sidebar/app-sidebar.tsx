@@ -28,7 +28,7 @@ import {
 // Perbaiki logo svgk kita yg rusak
 // Check apakah ga bisa dapat info dari data yg di pakai di server rendering, karna liat data dari navUser dan nav admin dan nav owner kita yg flicker
 
-import { Role, User } from '@/types/auth';
+import { Role, SessionUser, User } from '@/types/auth';
 import { NavOwner } from './nav-owner';
 import { createClient } from '@/utils/supabase/client';
 
@@ -37,8 +37,8 @@ export function AppSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar> & { hiddenUser?: boolean }) {
   const [role, setRole] = useState<Role>('USER');
-  const [user, setUser] = useState<User>({
-    name: '',
+  const [user, setUser] = useState<SessionUser>({
+    username: '',
     email: '',
     avatarUrl: '',
   });
@@ -52,7 +52,7 @@ export function AppSidebar({
         console.log("User doesn't exists");
       } else {
         const { avatar_url, name, email } = data.user.user_metadata;
-        setUser({ avatarUrl: avatar_url, email, name });
+        setUser({ avatarUrl: avatar_url, email, username: name });
       }
     }
     getUser();
@@ -141,7 +141,7 @@ export function AppSidebar({
         <SidebarFooter>
           <NavUser
             user={{
-              name: user.name ?? '',
+              name: user.username ?? '',
               email: user.email,
               avatar: user.avatarUrl ?? '',
             }}

@@ -30,9 +30,9 @@ export async function GET(request: Request) {
       if (!existingUser) {
         const payload = {
           email: data?.user?.email,
-          username: data?.user?.user_metadata?.name,
         };
-        // create user_profiles
+
+        // create user profiles
         const { error: insertError } = await supabase
           .from('user_profiles')
           .insert(payload);
@@ -41,18 +41,8 @@ export async function GET(request: Request) {
           console.log('Error inserting user data', insertError.message);
           return NextResponse.redirect(`${origin}/auth-error`);
         }
-      } else if (!existingUser?.username) {
-        // update user that not have username bc they logged in with email
-        const { error: updateUsernameError } = await supabase
-          .from('user_profiles')
-          .update({ username: data?.user?.user_metadata?.name })
-          .eq('email', data.user?.email);
-
-        if (updateUsernameError) {
-          console.log('Error updating username', updateUsernameError.message);
-          return NextResponse.redirect(`${origin}/auth-error`);
-        }
       }
+
       const forwardedHost = request.headers.get('x-forwarded-host'); // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === 'development';
       if (isLocalEnv) {

@@ -3,20 +3,12 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 
-interface SearchParams {
-  from?: string;
-}
-
-interface ComingSoonPageProps {
-  searchParams: SearchParams;
-}
-
-const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ searchParams }) => {
-  const from: string | null = searchParams?.from
-    ? searchParams.from
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, (char) => char.toUpperCase())
-    : null;
+const ComingSoonPage = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) => {
+  const { from } = await searchParams;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-blue-100">
@@ -44,7 +36,11 @@ const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ searchParams }) => {
         <h1 className="text-6xl font-bold text-blue-800">Coming Soon</h1>
         <Separator className="my-3 bg-primary " />
         <p className="mt-3 text-base text-blue-600">
-          We are currently working on {from ?? 'this'} page.
+          We are currently working on{' '}
+          {from
+            ?.replace(/-/g, ' ')
+            .replace(/\b\w/g, (char) => char.toUpperCase()) ?? 'This'}{' '}
+          page.
         </p>
         <p className="text-lbase text-blue-600">
           We'll be launching soon, Stay Tuned!
