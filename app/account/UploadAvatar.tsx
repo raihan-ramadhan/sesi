@@ -14,7 +14,13 @@ import { randomBytes } from 'crypto';
 import { ImageUp, LoaderCircle, Save, UserRound } from 'lucide-react';
 import Error from 'next/error';
 import Image from 'next/image';
-import { Dispatch, SetStateAction, useState, useTransition } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useRef,
+  useState,
+  useTransition,
+} from 'react';
 
 export default function UploadAvatar({
   bannerHeight,
@@ -30,6 +36,7 @@ export default function UploadAvatar({
   const [file, setFile] = useState<File | undefined>(undefined);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -42,18 +49,35 @@ export default function UploadAvatar({
   const uploadFile = () => {
     startTransition(async () => {
       try {
+        if (!file)
+          throw new Error({
+            statusCode: 400,
+            title: 'Pilih file nya terlebih dahulu',
+          });
+
+        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          throw new Error({
+            statusCode: 400,
+            title: 'Only JPEG, PNG, and WebP formats are allowed.',
+          });
+        }
+
+        if (file.size > MAX_SIZE) {
+          throw new Error({
+            statusCode: 400,
+            title: 'File size must be less than 5MB.',
+          });
+        }
+
         const supabase = await createClient();
         const isAuthenticated = await supabase.auth.getUser();
         if (!isAuthenticated.data.user)
           throw new Error({
             statusCode: 400,
             title: 'Silahkan login terlebih dahulu',
-          });
-
-        if (!file)
-          throw new Error({
-            statusCode: 400,
-            title: 'Pilih file nya terlebih dahulu',
           });
 
         const fileExt = file.name.split('.').pop();
@@ -168,7 +192,8 @@ export default function UploadAvatar({
               <Button
                 size={'sm'}
                 onClick={() => {
-                  if (!isPending) document.getElementById('avatarUrl')?.click();
+                  if (!isPending && fileInputRef.current)
+                    fileInputRef.current.click();
                 }}
                 type="button"
                 className={cn(
@@ -179,11 +204,13 @@ export default function UploadAvatar({
                 <ImageUp className="size-4" />
                 Ubah
                 <input
-                  id="avatarUrl"
-                  disabled={isPending}
                   type="file"
-                  onChange={handleProfilePicChange}
+                  id="avatarUrl"
                   className="hidden"
+                  ref={fileInputRef}
+                  disabled={isPending}
+                  onChange={handleProfilePicChange}
+                  accept="image/jpeg, image/png, image/webp"
                 />
               </Button>
             )}
