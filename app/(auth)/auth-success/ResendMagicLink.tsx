@@ -10,7 +10,7 @@ import { useActionState } from 'react';
 
 export function ResendMagicLink() {
   const initialCount = 60;
-  const [timeLeft, setTimeLeft] = useState<number>(initialCount); // Countdown starting from 10 seconds
+  const [timeLeft, setTimeLeft] = useState<number>(initialCount);
   const btnId = 'sendLink';
   const searchParams = useSearchParams();
   const email = searchParams.get('email') as string;

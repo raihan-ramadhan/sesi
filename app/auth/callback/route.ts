@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 // The client you created from the Server-Side Auth instructions
 import { createClient } from '@/utils/supabase/server';
+import { tableUserProfileName } from '@/utils/constants';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
       }
 
       const { data: existingUser } = await supabase
-        .from('user_profiles')
+        .from(tableUserProfileName)
         .select('*')
         .eq('email', data.user?.email)
         .limit(1)
@@ -34,12 +35,37 @@ export async function GET(request: Request) {
 
         // create user profiles
         const { error: insertError } = await supabase
-          .from('user_profiles')
+          .from(tableUserProfileName)
           .insert(payload);
 
         if (insertError) {
           console.log('Error inserting user data', insertError.message);
           return NextResponse.redirect(`${origin}/auth-error`);
+        }
+      }
+
+      if (!existingUser?.userName || !existingUser?.avatarUrl) {
+        // update user that not have userName and avatarUrl bc they signed up in with email
+        let payload: Record<string, any> = {};
+
+        if (!existingUser?.userName)
+          payload.userName = data?.user?.user_metadata?.name ?? '';
+        if (!existingUser?.avatarUrl)
+          payload.avatarUrl = data?.user?.user_metadata?.avatar_url ?? '';
+
+        if (Object.keys(payload).length > 0) {
+          const { error: updateUsernameError } = await supabase
+            .from(tableUserProfileName)
+            .update(payload)
+            .eq('email', data.user?.email);
+
+          if (updateUsernameError) {
+            console.log(
+              'Error updating user profiles',
+              updateUsernameError.message,
+            );
+            return NextResponse.redirect(`${origin}/auth-error`);
+          }
         }
       }
 

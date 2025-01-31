@@ -42,7 +42,6 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const fallback = (user.name?.[0] ?? user.email[0])?.toUpperCase();
   const [loading, setLoading] = useState(false);
-
   const handleLogout = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -94,7 +93,7 @@ export function NavUser({
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             side={isMobile ? 'bottom' : 'right'}
             align="end"
-            sideOffset={4}
+            sideOffset={8}
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">

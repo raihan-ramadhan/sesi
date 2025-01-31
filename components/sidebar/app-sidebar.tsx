@@ -28,17 +28,20 @@ import {
 // Perbaiki logo svgk kita yg rusak
 // Check apakah ga bisa dapat info dari data yg di pakai di server rendering, karna liat data dari navUser dan nav admin dan nav owner kita yg flicker
 
-import { Role, SessionUser, User } from '@/types/auth';
+import { Role, User } from '@/types/auth';
 import { NavOwner } from './nav-owner';
 import { createClient } from '@/utils/supabase/client';
+import { tableUserProfileName } from '@/utils/constants';
 
 export function AppSidebar({
   hiddenUser,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { hiddenUser?: boolean }) {
   const [role, setRole] = useState<Role>('USER');
-  const [user, setUser] = useState<SessionUser>({
-    username: '',
+  const [user, setUser] = useState<
+    Pick<User, 'userName' | 'email' | 'avatarUrl'>
+  >({
+    userName: '',
     email: '',
     avatarUrl: '',
   });
@@ -46,14 +49,28 @@ export function AppSidebar({
   useEffect(() => {
     async function getUser() {
       const supabase = await createClient();
-      const { error, data } = await supabase.auth.getUser();
+      const { error: errorGetUser, data: dataUser } =
+        await supabase.auth.getUser();
 
-      if (error || !data?.user) {
+      if (errorGetUser || !dataUser?.user) {
         console.log("User doesn't exists");
-      } else {
-        const { avatar_url, name, email } = data.user.user_metadata;
-        setUser({ avatarUrl: avatar_url, email, username: name });
+        return;
       }
+
+      const { error, data } = await supabase
+        .from(tableUserProfileName)
+        .select('*')
+        .eq('email', dataUser.user?.email)
+        .limit(1)
+        .single();
+
+      if (error || !data) {
+        console.log("User Profiles doesn't exists");
+        return;
+      }
+
+      const { avatarUrl, userName, email } = data;
+      setUser({ avatarUrl, email, userName });
     }
     getUser();
   }, []);
@@ -141,7 +158,7 @@ export function AppSidebar({
         <SidebarFooter>
           <NavUser
             user={{
-              name: user.username ?? '',
+              name: user.userName ?? '',
               email: user.email,
               avatar: user.avatarUrl ?? '',
             }}

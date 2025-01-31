@@ -2,7 +2,8 @@
 
 import { createClient } from '@/utils/supabase/server';
 import { getUserSession } from './auth';
-import { Userprofiles } from '@/types/auth';
+import { User } from '@/types/auth';
+import { tableUserProfileName } from '@/utils/constants';
 
 export async function getUserProfiles(email: string) {
   const isAuthenticated = await getUserSession();
@@ -14,7 +15,7 @@ export async function getUserProfiles(email: string) {
   const supabase = await createClient();
 
   const { data, error, status } = await supabase
-    .from('user_profiles')
+    .from(tableUserProfileName)
     .select('*')
     .eq('email', email)
     .limit(1)
@@ -24,5 +25,5 @@ export async function getUserProfiles(email: string) {
     return { status, message: error.message };
   }
 
-  return { status: 'success', data: data as Userprofiles };
+  return { status: 'success', data: data as User };
 }

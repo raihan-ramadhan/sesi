@@ -9,16 +9,11 @@ export const GENDER_VALUES = [
 
 export type Gender = (typeof GENDER_VALUES)[number];
 
-export type SessionUser = {
-  username?: string | null;
+export type User = {
+  bannerUrl: string;
+  address: string;
+  gender: Gender;
+  userName: string;
   email: string;
   avatarUrl: string;
 };
-
-export type Userprofiles = {
-  bannerUrl: string;
-  address: string;
-  gender?: Gender | null;
-};
-
-export type User = SessionUser & Userprofiles;

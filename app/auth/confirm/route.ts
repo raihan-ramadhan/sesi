@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
+import { tableUserProfileName } from '@/utils/constants';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -21,16 +22,18 @@ export async function GET(request: NextRequest) {
     if (!error) {
       // create user_profiles
       const { data: existingUser } = await supabase
-        .from('user_profiles')
+        .from(tableUserProfileName)
         .select('*')
         .eq('email', data.user?.email)
         .limit(1)
         .single();
 
       if (!existingUser) {
-        const { error: dbError } = await supabase.from('user_profiles').insert({
-          email: data?.user?.email,
-        });
+        const { error: dbError } = await supabase
+          .from(tableUserProfileName)
+          .insert({
+            email: data?.user?.email,
+          });
 
         if (dbError) {
           console.log('Error inserting user data', dbError.message);

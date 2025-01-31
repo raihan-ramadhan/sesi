@@ -33,6 +33,7 @@ import {
 import { updateAccountData } from '@/actions/account';
 import { useFormStatus } from 'react-dom';
 import { useToast } from '@/hooks/use-toast';
+import UploadAvatar from './UploadAvatar';
 
 export const AccountPage = ({ initialData }: { initialData: User }) => {
   const [role, setRole] = useState<Role>('USER');
@@ -40,14 +41,6 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
   const [user, setUser] = useState<User>(initialData);
   const { pending } = useFormStatus();
   const { toast } = useToast();
-
-  const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      // Upload file to server or storage
-      setUser((prev) => ({ ...prev, image: URL.createObjectURL(file) }));
-    }
-  };
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -61,6 +54,29 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
     const newValue = toProperCase(value.replaceAll('_', ' '));
     return newValue;
   }
+
+  const formAction = async (formData: FormData) => {
+    const { status, message, data } = await updateAccountData({
+      oldData: initialData,
+      formData,
+    });
+
+    if (status == 'success' && data) {
+      toast({
+        title: 'Sukses!',
+        description: 'Kamu berhasil mengupdate data akun kamu',
+      });
+
+      setUser(data);
+    } else if (message) {
+      toast({
+        variant: 'destructive',
+        title: 'Gagal!',
+        description:
+          (message as string) || 'terjadi Kesalahan saat mengupdate!',
+      });
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -87,30 +103,7 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
         </header>
 
         {/* FORM */}
-        <form
-          action={async (formData) => {
-            const { status, message, data } = await updateAccountData({
-              oldData: initialData,
-              formData,
-            });
-
-            if (status == 'success' && data) {
-              toast({
-                title: 'Sukses!',
-                description: 'Kamu berhasil mengupdate data akun kamu',
-              });
-
-              setUser(data);
-            } else if (message) {
-              toast({
-                variant: 'destructive',
-                title: 'Gagal!',
-                description:
-                  (message as string) || 'terjadi Kesalahan saat mengupdate!',
-              });
-            }
-          }}
-        >
+        <form action={formAction}>
           <div className="grid gap-6 mx-auto p-4">
             {/* BANNER Image*/}
             <div
@@ -120,7 +113,9 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
               )}
             >
               <Image
-                src={'/default-banner-1.webp'}
+                src={
+                  !!user.bannerUrl ? user.bannerUrl : '/default-banner-1.webp'
+                }
                 alt="Cover"
                 fill
                 className="object-cover"
@@ -140,7 +135,7 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
                 )}
               >
                 <ImageUp className="size-4" />
-                Add a banner image
+                {!!user.bannerUrl ? 'Change' : 'Add'} a banner image
                 <input
                   id="bannerUrl"
                   type="file"
@@ -151,65 +146,24 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
             </div>
 
             {/* Profile Picture */}
-            <div
-              className={cn('w-48 mb-4 bg-transparent absolute', bannerHeight)}
-            >
-              <div className="relative left-0 bottom-0 w-48 h-48">
-                <div className="flex items-center absolute left-10 -bottom-1/2 -translate-y-1/2">
-                  <div className="flex items-center gap-4">
-                    {user.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl ?? ''}
-                        alt="Profile"
-                        className="w-24 h-24 rounded-full object-cover shadow-md"
-                      />
-                    ) : (
-                      <div className="rounded-full w-24 h-24 bg-secondary flex justify-center items-center shadow-md">
-                        <UserRound className="w-12 h-12" />
-                      </div>
-                    )}
-
-                    {/* Upload Profile Image Button */}
-                    <div
-                      onClick={() => {
-                        if (!pending)
-                          document.getElementById('avatarUrl')?.click();
-                      }}
-                      className={cn(
-                        'flex bg-black bg-opacity-40 p-2 rounded-sm backdrop-blur-sm text-white text-xs justify-center items-center gap-1 hover:bg-opacity-60 cursor-pointer transition-colors duration-200 select-none shadow-md',
-                        pending && 'cursor-progress',
-                      )}
-                    >
-                      <ImageUp className="size-4" />
-                      Ubah
-                      <input
-                        id="avatarUrl"
-                        disabled={pending}
-                        type="file"
-                        onChange={handleProfilePicChange}
-                        className="hidden"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <UploadAvatar
+              {...{ bannerHeight, pending, setUser, user, initialData }}
+            />
 
             {/* Name Input */}
             <div className="grid gap-2 mt-12">
-              <Label htmlFor="username">Name</Label>
+              <Label htmlFor="userName">Name</Label>
               <Input
-                id="username"
-                name="username"
+                id="userName"
+                name="userName"
                 maxLength={320}
                 placeholder="Nama"
                 onChange={(e) =>
                   setUser((prev) => ({ ...prev, name: e.target.value }))
                 }
                 type="text"
-                defaultValue={user.username ?? ''}
+                defaultValue={user.userName ?? ''}
                 disabled={pending}
-                required
               />
             </div>
 
@@ -224,13 +178,13 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
             {/* Gender Select*/}
             <div className="grid gap-2">
               <Label htmlFor="gender">Jenis Kelamin</Label>
-              <Select defaultValue={user.gender ?? ''} name="gender">
+              <Select defaultValue={user.gender} name="gender">
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih jenis kelamin" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Jenis Kelamin</SelectLabel>
+                    <SelectLabel defaultValue={''}>Jenis Kelamin</SelectLabel>
                     <SelectItem value={GENDER_VALUES['0']}>
                       {properValue(GENDER_VALUES['0'])}
                     </SelectItem>

@@ -3,11 +3,12 @@ import { AccountPage } from './account';
 import { getAccountData } from '@/actions/account';
 
 const Dashboard: React.FC = async () => {
-  const { data } = await getAccountData();
+  const { data, message } = await getAccountData();
 
   if (data) {
     return <AccountPage initialData={data} />;
   } else {
+    console.error({ error: message });
     redirect('/sign-in');
   }
 };
