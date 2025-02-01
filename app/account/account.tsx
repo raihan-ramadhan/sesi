@@ -34,6 +34,7 @@ import { updateAccountData } from '@/actions/account';
 import { useFormStatus } from 'react-dom';
 import { useToast } from '@/hooks/use-toast';
 import UploadAvatar from './UploadAvatar';
+import UploadBanner from './UploadBanner';
 
 export const AccountPage = ({ initialData }: { initialData: User }) => {
   const [role, setRole] = useState<Role>('USER');
@@ -106,44 +107,9 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
         <form action={formAction}>
           <div className="grid gap-6 mx-auto p-4">
             {/* BANNER Image*/}
-            <div
-              className={cn(
-                'w-full mb-4 bg-secondary relative rounded-md overflow-clip',
-                bannerHeight,
-              )}
-            >
-              <Image
-                src={
-                  !!user.bannerUrl ? user.bannerUrl : '/default-banner-1.webp'
-                }
-                alt="Cover"
-                fill
-                className="object-cover"
-              />
-
-              {/* Gradient Overlay  */}
-              <GradientOverlay className={'from-transparent opacity-70'} />
-
-              {/* Upload Banner Image Button */}
-              <div
-                onClick={() => {
-                  if (!pending) document.getElementById('bannerUrl')?.click();
-                }}
-                className={cn(
-                  'absolute bottom-2 right-2 flex bg-black bg-opacity-20 p-2 rounded-sm backdrop-blur-sm text-white text-xs justify-center items-center gap-1 hover:bg-opacity-40 cursor-pointer transition-colors duration-200 select-none',
-                  pending && 'cursor-progress',
-                )}
-              >
-                <ImageUp className="size-4" />
-                {!!user.bannerUrl ? 'Change' : 'Add'} a banner image
-                <input
-                  id="bannerUrl"
-                  type="file"
-                  onChange={handleCoverImageChange}
-                  className="hidden"
-                />
-              </div>
-            </div>
+            <UploadBanner
+              {...{ bannerHeight, pending, setUser, user, initialData }}
+            />
 
             {/* Profile Picture */}
             <UploadAvatar
