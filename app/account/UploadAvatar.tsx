@@ -11,7 +11,7 @@ import {
 } from '@/utils/constants';
 import { createClient } from '@/utils/supabase/client';
 import { randomBytes } from 'crypto';
-import { ImageUp, LoaderCircle, Save, UserRound } from 'lucide-react';
+import { ImageUp, LoaderCircle, Save, Trash, UserRound } from 'lucide-react';
 import Error from 'next/error';
 import Image from 'next/image';
 import {
@@ -147,18 +147,74 @@ export default function UploadAvatar({
     });
   };
 
+  const deleteAvatar = () => {
+    startTransition(async () => {
+      try {
+        const supabase = await createClient();
+        const isAuthenticated = await supabase.auth.getUser();
+        if (!isAuthenticated.data.user)
+          throw new Error({
+            statusCode: 400,
+            title: 'Silahkan login terlebih dahulu',
+          });
+
+        const { error: updateError } = await supabase
+          .from(tableUserProfileName)
+          .update({ avatarUrl: '' })
+          .eq('email', isAuthenticated.data.user.email)
+          .select()
+          .single();
+
+        if (updateError)
+          throw new Error({
+            statusCode: 400,
+            title: updateError.message,
+          });
+
+        const array = user.avatarUrl.split('/');
+        const pathName = `${array[array.length - 2]}/${array[array.length - 1]}`;
+        const { error: deleteImageError } = await supabase.storage
+          .from(storageName)
+          .remove([pathName]);
+
+        if (deleteImageError)
+          throw new Error({
+            statusCode: 400,
+            title: deleteImageError.message,
+          });
+
+        toast({
+          title: 'Berhasil!',
+          description: 'Foto profil berhasil di hapus!',
+        });
+        setUser((prev) => ({ ...prev, avatarUrl: '' }));
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Gagal!',
+          description:
+            error?.props?.title ??
+            error?.message ??
+            'Terjadi kesalahan saat mengupload',
+        });
+      }
+    });
+  };
+
   return (
     <div className={cn('w-48 mb-4 bg-transparent absolute', bannerHeight)}>
       <div className="relative left-0 bottom-0 w-48 h-48">
         <div className="flex items-center absolute left-10 -bottom-1/2 -translate-y-1/2">
           <div className="flex items-center gap-4">
             {!!user.avatarUrl ? (
-              <div className="w-24 h-24 relative shadow-md rounded-full overflow-hidden bg-background">
+              <div className="size-24 relative shadow-md rounded-full overflow-hidden">
                 <Image
-                  src={user.avatarUrl ?? ''}
-                  alt="Profile"
-                  fill
-                  className="object-cover"
+                  src={user.avatarUrl}
+                  alt={user.userName}
+                  width={96}
+                  height={96}
+                  priority
+                  className="size-full object-cover object-center bg-background"
                 />
               </div>
             ) : (
@@ -205,30 +261,50 @@ export default function UploadAvatar({
                 </Button>
               </div>
             ) : (
-              <Button
-                size={'sm'}
-                onClick={() => {
-                  if (!isPending && fileInputRef.current)
-                    fileInputRef.current.click();
-                }}
-                type="button"
-                className={cn(
-                  'flex bg-black bg-opacity-40 hover:bg-opacity-60 hover:bg-black',
-                  isPending && 'cursor-progress',
-                )}
-              >
-                <ImageUp className="size-4" />
-                Ubah
-                <input
-                  type="file"
-                  id="avatarUrl"
-                  className="hidden"
-                  ref={fileInputRef}
-                  disabled={isPending}
-                  onChange={handleProfilePicChange}
-                  accept="image/jpeg, image/png, image/webp"
-                />
-              </Button>
+              <div className="flex justify-center items-center gap-1">
+                <Button
+                  size={'sm'}
+                  onClick={() => {
+                    if (!isPending && fileInputRef.current)
+                      fileInputRef.current.click();
+                  }}
+                  type="button"
+                  className={cn(
+                    'flex bg-black bg-opacity-40 hover:bg-opacity-60 hover:bg-black',
+                    isPending && 'cursor-progress',
+                  )}
+                >
+                  <ImageUp className="size-4" />
+                  Ubah
+                  <input
+                    type="file"
+                    id="avatarUrl"
+                    className="hidden"
+                    ref={fileInputRef}
+                    disabled={isPending}
+                    onChange={handleProfilePicChange}
+                    accept="image/jpeg, image/png, image/webp"
+                  />
+                </Button>
+                {!!user.avatarUrl ? (
+                  <Button
+                    type="button"
+                    size={'sm'}
+                    onClick={deleteAvatar}
+                    variant={'destructive'}
+                    className={cn(
+                      'bg-black bg-opacity-40 backdrop-blur-sm hover:bg-opacity-60  hover:bg-destructive',
+                      isPending && 'cursor-progress',
+                    )}
+                  >
+                    {isPending ? (
+                      <LoaderCircle className="animate-spin" />
+                    ) : (
+                      <Trash />
+                    )}
+                  </Button>
+                ) : null}
+              </div>
             )}
           </div>
         </div>

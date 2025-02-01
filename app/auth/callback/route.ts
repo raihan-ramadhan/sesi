@@ -44,28 +44,19 @@ export async function GET(request: Request) {
         }
       }
 
-      if (!existingUser?.userName || !existingUser?.avatarUrl) {
-        // update user that not have userName and avatarUrl bc they signed up in with email
-        let payload: Record<string, any> = {};
+      if (!existingUser?.userName) {
+        // update user that not have userName bc they signed up in with email
+        const { error: updateUsernameError } = await supabase
+          .from(tableUserProfileName)
+          .update({ userName: data?.user?.user_metadata?.name ?? '' })
+          .eq('email', data.user?.email);
 
-        if (!existingUser?.userName)
-          payload.userName = data?.user?.user_metadata?.name ?? '';
-        if (!existingUser?.avatarUrl)
-          payload.avatarUrl = data?.user?.user_metadata?.avatar_url ?? '';
-
-        if (Object.keys(payload).length > 0) {
-          const { error: updateUsernameError } = await supabase
-            .from(tableUserProfileName)
-            .update(payload)
-            .eq('email', data.user?.email);
-
-          if (updateUsernameError) {
-            console.log(
-              'Error updating user profiles',
-              updateUsernameError.message,
-            );
-            return NextResponse.redirect(`${origin}/auth-error`);
-          }
+        if (updateUsernameError) {
+          console.log(
+            'Error updating user profiles',
+            updateUsernameError.message,
+          );
+          return NextResponse.redirect(`${origin}/auth-error`);
         }
       }
 

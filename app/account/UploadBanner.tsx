@@ -12,7 +12,8 @@ import {
 } from '@/utils/constants';
 import { createClient } from '@/utils/supabase/client';
 import { randomBytes } from 'crypto';
-import { ImageUp, LoaderCircle, Save, UserRound } from 'lucide-react';
+import { ImageUp, LoaderCircle, Save, Trash, UserRound } from 'lucide-react';
+import { StaticImport } from 'next/dist/shared/lib/get-img-props';
 import Error from 'next/error';
 import Image from 'next/image';
 import {
@@ -38,6 +39,10 @@ export default function UploadBanner({
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const imgSrc: string | StaticImport = !!user.bannerUrl
+    ? user.bannerUrl
+    : '/default-banner-1.webp';
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -148,6 +153,60 @@ export default function UploadBanner({
     });
   };
 
+  const deleteBanner = () => {
+    startTransition(async () => {
+      try {
+        const supabase = await createClient();
+        const isAuthenticated = await supabase.auth.getUser();
+        if (!isAuthenticated.data.user)
+          throw new Error({
+            statusCode: 400,
+            title: 'Silahkan login terlebih dahulu',
+          });
+
+        const { error: updateError } = await supabase
+          .from(tableUserProfileName)
+          .update({ bannerUrl: '' })
+          .eq('email', isAuthenticated.data.user.email)
+          .select()
+          .single();
+
+        if (updateError)
+          throw new Error({
+            statusCode: 400,
+            title: updateError.message,
+          });
+
+        const array = user.bannerUrl.split('/');
+        const pathName = `${array[array.length - 2]}/${array[array.length - 1]}`;
+        const { error: deleteImageError } = await supabase.storage
+          .from(storageName)
+          .remove([pathName]);
+
+        if (deleteImageError)
+          throw new Error({
+            statusCode: 400,
+            title: deleteImageError.message,
+          });
+
+        toast({
+          title: 'Berhasil!',
+          description: 'Gambar banner berhasil di hapus!',
+        });
+        setUser((prev) => ({ ...prev, bannerUrl: '' }));
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Gagal!',
+          description:
+            error?.props?.title ??
+            error?.message ??
+            'Terjadi kesalahan saat mengupload',
+        });
+      }
+    });
+  };
+
   return (
     <div
       className={cn(
@@ -156,77 +215,103 @@ export default function UploadBanner({
       )}
     >
       <Image
-        src={!!user.bannerUrl ? user.bannerUrl : '/default-banner-1.webp'}
+        src={imgSrc}
         alt="Cover"
         fill
         className="object-cover"
+        onLoad={() => setIsLoading(false)}
       />
-
-      {/* Gradient Overlay  */}
-      <GradientOverlay className={'from-transparent opacity-70'} />
-
-      {/* Upload Banner Image Button */}
-      {!!file ? (
-        <div className="absolute bottom-2 right-2 flex justify-center items-center gap-1">
-          <Button
-            size={'sm'}
-            type="button"
-            variant={'default'}
-            onClick={uploadFile}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <>
-                <LoaderCircle className="animate-spin" />
-                Saving
-              </>
-            ) : (
-              <>
-                <Save />
-                Save
-              </>
-            )}
-          </Button>
-          <Button
-            onClick={() => {
-              setUser((prev) => ({
-                ...prev,
-                bannerUrl: initialData.bannerUrl,
-              }));
-              setFile(undefined);
-            }}
-            size={'sm'}
-            type="button"
-            variant={'destructive'}
-          >
-            Cancel
-          </Button>
-        </div>
+      {isLoading ? (
+        <div className="absolute inset-0 size-full bg-muted" />
       ) : (
-        <Button
-          type="button"
-          size={'sm'}
-          onClick={() => {
-            if (!isPending && fileInputRef.current)
-              fileInputRef.current.click();
-          }}
-          className={cn(
-            'absolute bottom-2 right-2 flex bg-black bg-opacity-20 backdrop-blur-sm hover:bg-opacity-40  hover:bg-black',
-            isPending && 'cursor-progress',
+        <>
+          {/* Gradient Overlay  */}
+          <GradientOverlay className={'from-transparent opacity-70'} />
+
+          {/* Upload Banner Image Button */}
+          {!!file ? (
+            <div className="absolute bottom-2 right-2 flex justify-center items-center gap-1">
+              <Button
+                size={'sm'}
+                type="button"
+                variant={'default'}
+                onClick={uploadFile}
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <>
+                    <LoaderCircle className="animate-spin" />
+                    Saving
+                  </>
+                ) : (
+                  <>
+                    <Save />
+                    Save
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={() => {
+                  setUser((prev) => ({
+                    ...prev,
+                    bannerUrl: initialData.bannerUrl,
+                  }));
+                  setFile(undefined);
+                }}
+                size={'sm'}
+                type="button"
+                variant={'destructive'}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <div className="flex justify-center items-center gap-1 absolute bottom-2 right-2 ">
+              <Button
+                type="button"
+                size={'sm'}
+                onClick={() => {
+                  if (!isPending && fileInputRef.current)
+                    fileInputRef.current.click();
+                }}
+                className={cn(
+                  'flex bg-black bg-opacity-20 backdrop-blur-sm hover:bg-opacity-40  hover:bg-black',
+                  isPending && 'cursor-progress',
+                )}
+              >
+                <ImageUp className="size-4" />
+                {!!user.bannerUrl ? 'Ubah' : 'Tambah'} gambar banner
+                <input
+                  ref={fileInputRef}
+                  id="bannerUrl"
+                  disabled={isPending}
+                  type="file"
+                  onChange={handleProfilePicChange}
+                  accept="image/jpeg, image/png, image/webp"
+                  className="hidden"
+                />
+              </Button>
+              {!!user.bannerUrl ? (
+                <Button
+                  type="button"
+                  size={'sm'}
+                  onClick={deleteBanner}
+                  variant={'destructive'}
+                  className={cn(
+                    'bg-black bg-opacity-20 backdrop-blur-sm hover:bg-opacity-40  hover:bg-destructive',
+                    isPending && 'cursor-progress',
+                  )}
+                >
+                  {isPending ? (
+                    <LoaderCircle className="animate-spin" />
+                  ) : (
+                    <Trash />
+                  )}
+                </Button>
+              ) : null}
+            </div>
           )}
-        >
-          <ImageUp className="size-4" />
-          {!!user.bannerUrl ? 'Ubah' : 'Tambah'} gambar banner
-          <input
-            ref={fileInputRef}
-            id="bannerUrl"
-            disabled={isPending}
-            type="file"
-            onChange={handleProfilePicChange}
-            accept="image/jpeg, image/png, image/webp"
-            className="hidden"
-          />
-        </Button>
+        </>
       )}
     </div>
   );
