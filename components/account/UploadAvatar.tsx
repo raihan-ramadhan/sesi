@@ -3,7 +3,10 @@
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/stores/useUserStore';
 import { User } from '@/types/auth';
+import { deleteImage } from '@/utils/client/deleteImage';
+import { uploadImage } from '@/utils/client/uploadUmage';
 import {
   avatarsStorageName,
   storageName,
@@ -14,25 +17,17 @@ import { randomBytes } from 'crypto';
 import { ImageUp, LoaderCircle, Save, Trash, UserRound } from 'lucide-react';
 import Error from 'next/error';
 import Image from 'next/image';
-import {
-  Dispatch,
-  SetStateAction,
-  useRef,
-  useState,
-  useTransition,
-} from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 
 export default function UploadAvatar({
   bannerHeight,
-  user,
-  setUser,
-  initialData,
+  initialData: initialDataParam,
 }: {
   bannerHeight: string;
-  user: User;
-  setUser: Dispatch<SetStateAction<User>>;
   initialData: User;
 }) {
+  const { user, setUser } = useUserStore();
+  const [initialData, setInitialData] = useState<User>(initialDataParam);
   const [file, setFile] = useState<File | undefined>(undefined);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -42,95 +37,26 @@ export default function UploadAvatar({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFile(file);
-      setUser((prev) => ({ ...prev, avatarUrl: URL.createObjectURL(file) }));
+      setUser({ avatarUrl: URL.createObjectURL(file) });
     }
   };
 
   const uploadFile = () => {
     startTransition(async () => {
       try {
-        if (!file)
-          throw new Error({
-            statusCode: 400,
-            title: 'Pilih file nya terlebih dahulu',
-          });
-
-        const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-        const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-        if (!ALLOWED_TYPES.includes(file.type)) {
-          throw new Error({
-            statusCode: 415,
-            title: 'Only JPEG, PNG, and WebP formats are allowed.',
-          });
-        }
-
-        if (file.size > MAX_SIZE) {
-          throw new Error({
-            statusCode: 413,
-            title: 'File size must be less than 5MB.',
-          });
-        }
-
-        const supabase = await createClient();
-        const isAuthenticated = await supabase.auth.getUser();
-        if (!isAuthenticated.data.user)
-          throw new Error({
-            statusCode: 400,
-            title: 'Silahkan login terlebih dahulu',
-          });
-
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${randomBytes(16).toString('hex')}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        // UPLOAD IMAGE
-        const { error: errorUpload } = await supabase.storage
-          .from(avatarsStorageName)
-          .upload(filePath, file);
-
-        if (errorUpload)
-          throw new Error({
-            statusCode: 400,
-            title: errorUpload.message,
-          });
-
-        // GET URL
-        const { data } = await supabase.storage
-          .from(avatarsStorageName)
-          .getPublicUrl(filePath);
-
-        // UPDATE TABLE
-        const { error: updateError } = await supabase
-          .from(tableUserProfileName)
-          .update({ avatarUrl: data.publicUrl })
-          .eq('email', isAuthenticated.data.user.email)
-          .select()
-          .single();
-
-        if (updateError)
-          throw new Error({
-            statusCode: 400,
-            title: updateError.message,
-          });
-
-        // REMOVE THE OLD IMAGE IF THE IMAGE FROM SUPABASE
-        if (initialData.avatarUrl.includes('supabase.co')) {
-          const array = initialData.avatarUrl.split('/');
-          const pathName = `${array[array.length - 2]}/${array[array.length - 1]}`;
-          await supabase.storage
-            .from(storageName)
-            .remove([pathName])
-            .catch((error: any) => {
-              console.log({ error });
-            });
-        }
+        const { data } = await uploadImage({
+          file,
+          keyItem: 'avatarUrl',
+          oldImage: initialData.avatarUrl,
+          storageName: avatarsStorageName,
+        });
 
         toast({
           title: 'Berhasil!',
           description: 'Foto profil berhasil di update!',
         });
-        setUser((prev) => ({ ...prev, avatarUrl: data.publicUrl }));
+        setUser({ avatarUrl: data.publicUrl });
+        setInitialData((prev) => ({ ...prev, avatarUrl: data.publicUrl }));
         setFile(undefined);
       } catch (error: any) {
         toast({
@@ -141,7 +67,7 @@ export default function UploadAvatar({
             error?.message ??
             'Terjadi kesalahan saat mengupload',
         });
-        setUser((prev) => ({ ...prev, avatarUrl: initialData.avatarUrl }));
+        setUser({ avatarUrl: initialData.avatarUrl });
         setFile(undefined);
       }
     });
@@ -150,44 +76,14 @@ export default function UploadAvatar({
   const deleteAvatar = () => {
     startTransition(async () => {
       try {
-        const supabase = await createClient();
-        const isAuthenticated = await supabase.auth.getUser();
-        if (!isAuthenticated.data.user)
-          throw new Error({
-            statusCode: 400,
-            title: 'Silahkan login terlebih dahulu',
-          });
-
-        const { error: updateError } = await supabase
-          .from(tableUserProfileName)
-          .update({ avatarUrl: '' })
-          .eq('email', isAuthenticated.data.user.email)
-          .select()
-          .single();
-
-        if (updateError)
-          throw new Error({
-            statusCode: 400,
-            title: updateError.message,
-          });
-
-        const array = user.avatarUrl.split('/');
-        const pathName = `${array[array.length - 2]}/${array[array.length - 1]}`;
-        const { error: deleteImageError } = await supabase.storage
-          .from(storageName)
-          .remove([pathName]);
-
-        if (deleteImageError)
-          throw new Error({
-            statusCode: 400,
-            title: deleteImageError.message,
-          });
+        await deleteImage({ url: user.avatarUrl, keyItem: 'avatarUrl' });
 
         toast({
           title: 'Berhasil!',
           description: 'Foto profil berhasil di hapus!',
         });
-        setUser((prev) => ({ ...prev, avatarUrl: '' }));
+        setUser({ avatarUrl: '' });
+        setInitialData((prev) => ({ ...prev, avatarUrl: '' }));
       } catch (error: any) {
         toast({
           variant: 'destructive',
@@ -201,16 +97,22 @@ export default function UploadAvatar({
     });
   };
 
+  useEffect(() => {
+    return () => {
+      setFile(undefined);
+    };
+  }, []);
+
   return (
     <div className={cn('w-48 mb-4 bg-transparent absolute', bannerHeight)}>
       <div className="relative left-0 bottom-0 w-48 h-48">
         <div className="flex items-center absolute left-10 -bottom-1/2 -translate-y-1/2">
           <div className="flex items-center gap-4">
-            {!!user.avatarUrl ? (
+            {!!user.avatarUrl || !!initialData.avatarUrl ? (
               <div className="size-24 relative shadow-md rounded-full overflow-hidden">
                 <Image
-                  src={user.avatarUrl}
-                  alt={user.userName}
+                  src={user.avatarUrl ?? initialData.avatarUrl}
+                  alt={user.userName ?? initialData.userName ?? 'Profile'}
                   width={96}
                   height={96}
                   priority
@@ -247,10 +149,7 @@ export default function UploadAvatar({
                 </Button>
                 <Button
                   onClick={() => {
-                    setUser((prev) => ({
-                      ...prev,
-                      avatarUrl: initialData.avatarUrl,
-                    }));
+                    setUser({ avatarUrl: initialData.avatarUrl });
                     setFile(undefined);
                   }}
                   size={'sm'}
@@ -286,7 +185,7 @@ export default function UploadAvatar({
                     accept="image/jpeg, image/png, image/webp"
                   />
                 </Button>
-                {!!user.avatarUrl ? (
+                {!!user.avatarUrl || !!initialData.avatarUrl ? (
                   <Button
                     type="button"
                     size={'sm'}
