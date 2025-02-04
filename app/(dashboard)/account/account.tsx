@@ -78,12 +78,6 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
           <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
-              {/* <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">
-                    Building Your Application
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" /> */}
               <BreadcrumbItem>
                 <BreadcrumbPage>Account</BreadcrumbPage>
               </BreadcrumbItem>
@@ -94,7 +88,7 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
 
       {/* FORM */}
       <form action={formAction}>
-        <div className="grid gap-6 mx-auto p-4">
+        <div className="grid gap-6 mx-auto p-[0_16px_16px_16px]">
           {/* BANNER Image*/}
           <UploadBanner bannerHeight={bannerHeight} initialData={initialData} />
 

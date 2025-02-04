@@ -21,15 +21,12 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 
-import { NavOwner } from './nav-owner';
 import { User } from '@/types/auth';
 
 export function AppSidebar({
-  hiddenUser,
   initialData,
   ...props
 }: React.ComponentProps<typeof Sidebar> & {
-  hiddenUser?: boolean;
   initialData: User;
 }) {
   return (
@@ -44,7 +41,7 @@ export function AppSidebar({
             },
             {
               title: 'Tryout',
-              url: '/coming-soon?from=tryout',
+              url: '/tryout',
               icon: BookOpenText,
             },
             {
@@ -78,30 +75,15 @@ export function AppSidebar({
             },
           ]}
         />
+        {/* HERE WE WILL CHECK IF THE ROLE IS ADMIN OR NOT */}
         {true ? (
           <NavAdmin
             list={[
               {
-                name: 'Submitted Question',
-                url: '/coming-soon?from=Submitted-Question',
+                name: 'Submitted Questions',
+                url: '/submitted-questions',
                 icon: Frame,
               },
-              {
-                name: 'Sales & Marketing',
-                url: '/coming-soon?from=Sales',
-                icon: PieChart,
-              },
-              {
-                name: 'Travel',
-                url: '/coming-soon?from=Travel',
-                icon: Map,
-              },
-            ]}
-          />
-        ) : null}
-        {true ? (
-          <NavOwner
-            projects={[
               {
                 name: 'Analytics',
                 url: '/analytics',
@@ -111,11 +93,9 @@ export function AppSidebar({
           />
         ) : null}
       </SidebarContent>
-      {hiddenUser ? null : (
-        <SidebarFooter>
-          <NavUser initialData={initialData} />
-        </SidebarFooter>
-      )}
+      <SidebarFooter>
+        <NavUser initialData={initialData} />
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>
