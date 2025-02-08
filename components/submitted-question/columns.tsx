@@ -1,21 +1,10 @@
 'use client';
 
+import { Question } from '@/types/question';
 import { ColumnDef, Getter } from '@tanstack/react-table';
 
 // This type is used to define the shape of our data.
 // You can use a Zod schema here if you want.
-export type Question = {
-  id: string;
-  question: string;
-  rightAnswer: string;
-  wrongAnswer: string[];
-  category: 'TIU' | 'TWK' | 'TKP';
-  subCategory: string;
-  creator: {
-    id: string;
-    name: string;
-  };
-};
 
 export const columns: ColumnDef<Question>[] = [
   {

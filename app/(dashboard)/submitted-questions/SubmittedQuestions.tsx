@@ -1,4 +1,4 @@
-import { columns, Question } from '@/components/submitted-question/columns';
+import { columns } from '@/components/submitted-question/columns';
 import { DataTable } from '@/components/submitted-question/data-table';
 import {
   Breadcrumb,
@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { Question } from '@/types/question';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 const Questions: Question[] = [
