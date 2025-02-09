@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { imageSchema } from './image';
 
 export const CATEGORIES_VALUES = ['TIU', 'TWK', 'TKP'] as const;
 
@@ -25,7 +26,7 @@ export const schemaQuestion = z.object({
     .min(1, {
       message: 'Question Line is required.',
     }),
-  image: z.instanceof(File).optional(),
+  image: imageSchema,
   rightAnswer: z
     .string({
       invalid_type_error: 'Invalid Right Answer',

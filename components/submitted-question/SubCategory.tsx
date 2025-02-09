@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { Input } from '@/components/ui/input'; // Adjust the import path as needed
-
-// Adjust the import path as needed
-import debounce from 'debounce';
+import { Control, UseFormSetValue } from 'react-hook-form';
+import { schemaQuestion } from '@/types/question';
 import { createClient } from '@/utils/supabase/client';
+import { LoaderCircle } from 'lucide-react';
+import { ScrollArea } from '../ui/scroll-area';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { z } from 'zod';
+import debounce from 'debounce';
 import {
   FormControl,
   FormDescription,
@@ -12,14 +16,8 @@ import {
   FormLabel,
   FormMessage,
 } from '../ui/form';
-import { Control, UseFormSetValue } from 'react-hook-form';
-import { schemaQuestion } from '@/types/question';
-import { z } from 'zod';
-import { ScrollArea } from '../ui/scroll-area';
-import { LoaderCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
-export function CategorySearchDropdown({
+export function SubCategory({
   setValue,
   value,
   name,
@@ -38,8 +36,8 @@ export function CategorySearchDropdown({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpenContent, setIsOpenContent] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Debounced search function
   const debouncedSearch = debounce(async (term: string) => {
     if (term) {
       const supabase = await createClient();
@@ -52,14 +50,12 @@ export function CategorySearchDropdown({
       if (!error && data) {
         setCategories(data.map((item) => item.name));
       }
-      // setIsOpenContent(!!term);
     } else {
       setCategories([]);
     }
     setIsLoading(false);
   }, 1000); // 1s delay
 
-  // Function to create a new category
   const createNewCategory = async () => {
     if (value.trim()) {
       setIsLoading(true);
@@ -71,25 +67,50 @@ export function CategorySearchDropdown({
         .select();
 
       if (!error && data) {
-        setCategories([data[0].name, ...categories]); // Add the new category to the list
-        setValue(name, data[0].name); // Automatically select the new category
+        setCategories([data[0].name, ...categories]);
+        setValue(name, data[0].name);
       }
       setIsLoading(false);
       setIsOpenContent(false);
     }
   };
 
-  useEffect(() => {
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+
+    handleChange(e);
+    setIsOpenContent(!!value);
+    setIsLoading(!!value);
+
     if (!!value) {
-      if (categories.length === 1 && categories[0] !== value)
-        setIsOpenContent(true);
-      setIsLoading(true);
+      debouncedSearch(value);
     } else {
-      setIsOpenContent(true);
+      setCategories([]);
     }
-    debouncedSearch(value);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpenContent(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
     return () => debouncedSearch.clear();
-  }, [value]);
+  }, []);
 
   return (
     <FormField
@@ -99,12 +120,12 @@ export function CategorySearchDropdown({
         <FormItem>
           <FormLabel>Sub-Category</FormLabel>
           <FormControl>
-            {/* RESULT OF REQUEST / CONTENT */}
-            <div className="relative">
+            {/* DROPDOWN OF RESULT */}
+            <div className="relative h-[200px]" ref={dropdownRef}>
               <div
                 className={cn(
-                  'hidden absolute w-full -top-1 -translate-y-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 p-1',
-                  (isLoading || !!value) && isOpenContent && 'block',
+                  'absolute w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none p-1 !left-0 !-top-1',
+                  isOpenContent ? 'animate-custom-open' : 'hidden',
                 )}
               >
                 <ScrollArea className="[&>[data-radix-scroll-area-viewport]]:max-h-[180px] w-full overflow-x-hidden">
@@ -144,14 +165,14 @@ export function CategorySearchDropdown({
               </div>
 
               {/* Input Search Droptop */}
-              <div className="relative">
+              <div className="relative w-full">
                 <Input
                   {...field}
                   ref={inputRef}
                   placeholder="Search a sub-category..."
                   className="relative"
                   type="text"
-                  onChange={handleChange}
+                  onChange={onChange}
                 />
                 {isLoading ? (
                   <div className="absolute z-10 top-1/2 -translate-y-1/2 right-4">

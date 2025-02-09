@@ -1,6 +1,10 @@
 import { randomBytes } from 'crypto';
 import { createClient } from '../supabase/client';
-import { storageName, tableUserProfileName } from '../constants';
+import { tableUserProfileName } from '../constants';
+import { z } from 'zod';
+import { imageSchema } from '@/types/image';
+
+export const uploadImageSchema = z.object({ file: imageSchema });
 
 export const uploadImage = async ({
   file,
@@ -13,32 +17,27 @@ export const uploadImage = async ({
   oldImage: string;
   keyItem: 'bannerUrl' | 'avatarUrl';
 }) => {
-  if (!file) throw new Error('Pilih file nya terlebih dahulu');
+  const validatedFields = uploadImageSchema.safeParse({ file });
+  if (!validatedFields.success)
+    throw new Error(
+      validatedFields.error.flatten().fieldErrors.file?.[0] as string,
+    );
 
-  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error('Only JPEG, PNG, and WebP formats are allowed.');
-  }
-
-  if (file.size > MAX_SIZE) {
-    throw new Error('File size must be less than 5MB.');
-  }
+  const validatedFile: File = validatedFields.data.file;
 
   const supabase = await createClient();
   const isAuthenticated = await supabase.auth.getUser();
   if (!isAuthenticated.data.user)
     throw new Error('Silahkan login terlebih dahulu');
 
-  const fileExt = file.name.split('.').pop();
+  const fileExt = validatedFile.name.split('.').pop();
   const fileName = `${randomBytes(16).toString('hex')}.${fileExt}`;
   const filePath = `${fileName}`;
 
   // UPLOAD IMAGE
   const { error: errorUpload } = await supabase.storage
     .from(storageName)
-    .upload(filePath, file);
+    .upload(filePath, validatedFile);
 
   if (errorUpload) throw new Error(errorUpload.message);
 

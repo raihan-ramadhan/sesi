@@ -182,7 +182,7 @@ export default function UploadAvatar({
                     ref={fileInputRef}
                     disabled={isPending}
                     onChange={handleProfilePicChange}
-                    accept="image/jpeg, image/png, image/webp"
+                    // accept="image/jpeg, image/png, image/webp"
                   />
                 </Button>
                 {!!user.avatarUrl || !!initialData.avatarUrl ? (

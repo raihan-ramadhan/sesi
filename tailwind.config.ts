@@ -66,6 +66,23 @@ const config: Config = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      animation: {
+        'custom-open': 'customDropdownOpen 0.2s ease-in forwards',
+      },
+      keyframes: {
+        customDropdownOpen: {
+          '0%': {
+            visibility: 'hidden',
+            transform: 'scale(0.9) translateY(-100%)',
+          },
+          '1%': {
+            visibility: 'visible',
+          },
+          '100%': {
+            transform: 'scale(1) translateY(-100%)',
+          },
+        },
+      },
     },
   },
   plugins: [require('tailwindcss-animate')],

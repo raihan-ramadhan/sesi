@@ -3,7 +3,7 @@
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { CategorySearchDropdown } from './CategorySearchDropdown';
+import { SubCategory } from './SubCategory';
 import {
   Select,
   SelectContent,
@@ -87,7 +87,7 @@ export const FormSubmitQuestion = () => {
       if (typeof message !== 'string') {
         console.log(logErrorMessages(message as ErrorObject));
       }
-
+      console.log(message);
       return;
     }
 
@@ -95,30 +95,41 @@ export const FormSubmitQuestion = () => {
     // myForm.reset();
   }
 
+  const save = (
+    name: keyof z.infer<typeof schemaQuestion>,
+    value: string | File,
+  ) => {
+    const updatedFormData = { ...savedFormData, [name]: value };
+    setSavedFormData(updatedFormData);
+    myForm.setValue(name, value);
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
-    const updatedFormData = { ...savedFormData, [name]: value };
-    setSavedFormData(updatedFormData);
-    myForm.setValue(name as keyof z.infer<typeof schemaQuestion>, value);
+    save(name as keyof z.infer<typeof schemaQuestion>, value);
   };
 
   const handleSelectChange = (
     name: keyof z.infer<typeof schemaQuestion>,
     value: string,
   ) => {
-    const updatedFormData = { ...savedFormData, [name]: value };
-    setSavedFormData(updatedFormData);
-    myForm.setValue(name as keyof z.infer<typeof schemaQuestion>, value);
+    save(name as keyof z.infer<typeof schemaQuestion>, value);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.name;
     const file = e.target.files?.[0] || null;
-    myForm.setValue('image', file as File);
-    const updatedFormData = { ...savedFormData, file };
-    setSavedFormData(updatedFormData);
+    save(name as keyof z.infer<typeof schemaQuestion>, file as File);
   };
+
+  const inputs = [
+    'wrongAnswer1',
+    'wrongAnswer2',
+    'wrongAnswer3',
+    'wrongAnswer4',
+  ] as const;
 
   useEffect(() => {
     setIsMounted(true);
@@ -133,6 +144,7 @@ export const FormSubmitQuestion = () => {
     <Form {...myForm}>
       <form onSubmit={myForm.handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-5">
+          {/* TEXTAREA INPUT */}
           <FormField
             control={myForm.control}
             name="questionLine"
@@ -152,12 +164,14 @@ export const FormSubmitQuestion = () => {
             )}
           />
 
+          {/* UPLOAD IMAGE INPUT */}
           <UploadQuestionImage
             control={myForm.control}
             name={'image'}
             handleFileChange={handleFileChange}
           />
 
+          {/* RIGHT ANSWER INPUT */}
           <FormField
             control={myForm.control}
             name="rightAnswer"
@@ -176,6 +190,8 @@ export const FormSubmitQuestion = () => {
               </FormItem>
             )}
           />
+
+          {/* WRONG ASNWER INPUT NO 1-4 */}
           <div
             className="flex w-full flex-col gap-2"
             role="group"
@@ -184,12 +200,6 @@ export const FormSubmitQuestion = () => {
             <FormLabel
               className={wrongAnswerHasErrors ? 'text-red-500' : ''}
               onClick={() => {
-                const inputs = [
-                  'wrongAnswer1',
-                  'wrongAnswer2',
-                  'wrongAnswer3',
-                  'wrongAnswer4',
-                ] as const;
                 for (const inputName of inputs) {
                   if (
                     !myForm.control._formValues[inputName] ||
@@ -204,77 +214,33 @@ export const FormSubmitQuestion = () => {
               Wrong Answer
             </FormLabel>
             <div className="grid grid-flow-col grid-rows-2 gap-4">
-              <FormField
-                control={myForm.control}
-                name="wrongAnswer1"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="Write Your Wrong Answer no 1..."
-                        {...field}
-                        id="wrongAnswer1"
-                        onChange={handleChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={myForm.control}
-                name="wrongAnswer2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="Write Your Wrong Answer no 2..."
-                        {...field}
-                        id="wrongAnswer2"
-                        onChange={handleChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={myForm.control}
-                name="wrongAnswer3"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="Write Your Wrong Answer no 3..."
-                        {...field}
-                        id="wrongAnswer3"
-                        onChange={handleChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={myForm.control}
-                name="wrongAnswer4"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="Write Your Wrong Answer no 4..."
-                        {...field}
-                        id="wrongAnswer4"
-                        onChange={handleChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {inputs.map((name, index) => {
+                return (
+                  <FormField
+                    key={index}
+                    control={myForm.control}
+                    name={name}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            placeholder="Write Your Wrong Answer no 1..."
+                            {...field}
+                            id={name}
+                            onChange={handleChange}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                );
+              })}
             </div>
             <FormDescription>This is your Wrong Answer.</FormDescription>
           </div>
+
+          {/* CATEGORY INPUT */}
           <FormField
             control={myForm.control}
             name="category"
@@ -309,7 +275,9 @@ export const FormSubmitQuestion = () => {
               </FormItem>
             )}
           />
-          <CategorySearchDropdown
+
+          {/* SUBCATEGORY DROPDOWN INPUT */}
+          <SubCategory
             control={myForm.control}
             name={'subCategory'}
             value={myForm.watch('subCategory')}
