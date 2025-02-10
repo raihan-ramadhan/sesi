@@ -9,6 +9,8 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { Question } from '@/types/question';
+import constants from '@/utils/constants';
+import { createClient } from '@/utils/supabase/server';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 const Questions: Question[] = [
@@ -128,6 +130,11 @@ async function getData(): Promise<Question[]> {
 }
 
 export const SubmittedQuestions = async () => {
+  const supabase = await createClient();
+  const { data: myData } = await supabase
+    .from(constants('TABLE_QUESTIONS'))
+    .select('*');
+
   const data = await getData();
 
   return (

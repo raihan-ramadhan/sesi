@@ -5,6 +5,8 @@ import { getUserSession } from './auth';
 import { createClient } from '@/utils/supabase/server';
 
 import { z } from 'zod';
+import constants from '@/utils/constants';
+import { randomBytes } from 'crypto';
 
 export type State =
   | {
@@ -18,12 +20,6 @@ export type State =
 export const submitAQuestionAction = async (
   values: z.infer<typeof schemaQuestion>,
 ) => {
-  const session = await getUserSession();
-  // return not authenticated user
-  if (!session) {
-    return { status: 'error', message: 'User is not authenticated' };
-  }
-
   const validatedFields = schemaQuestion.safeParse(values);
 
   // Return early if the form data is invalid
@@ -36,38 +32,95 @@ export const submitAQuestionAction = async (
       errorType: 'zod-error' as const,
     };
   }
+
+  const session = await getUserSession();
+  // return not authenticated user
+  if (!session) {
+    return { status: 'error', message: 'User is not authenticated' };
+  }
+
   const supabase = await createClient();
+  const { data } = validatedFields;
+  // exclude the subCategory string line
+  const { subCategory, image, ...filteredValidatedObj } = data;
+  let subCategory_id: string;
+  let imageUrl: string | undefined;
 
-  const { data: validatedData } = validatedFields;
+  if (image) {
+    const fileExt = image.name.split('.').pop();
+    const fileName = `${randomBytes(16).toString('hex')}.${fileExt}`;
+    const filePath = `${fileName}`;
 
-  console.log(validatedData);
+    const arrayBuffer = await image.arrayBuffer();
+    // UPLOAD IMAGE
+    const { error: errorUpload } = await supabase.storage
+      .from(constants('QUESTIONS_STORAGE_NAME'))
+      .upload(filePath, arrayBuffer, {
+        contentType: image.type,
+        cacheControl: '3600',
+        upsert: false,
+      });
 
-  // const file = validatedData.image;
+    if (errorUpload) throw new Error(errorUpload.message);
 
-  // if (file) {
-  //   const fileExt = file.name.split('.').pop();
-  //   const fileName = `${randomBytes(16).toString('hex')}.${fileExt}`;
-  //   const filePath = `${fileName}`;
+    // GET URL
+    const { data } = await supabase.storage
+      .from(constants('QUESTIONS_STORAGE_NAME'))
+      .getPublicUrl(filePath);
 
-  //   const arrayBuffer = await file.arrayBuffer();
-  //   // UPLOAD IMAGE
-  //   const { error: errorUpload } = await supabase.storage
-  //     .from(questionsStorageName)
-  //     .upload(filePath, arrayBuffer, {
-  //       contentType: file.type,
-  //       cacheControl: '3600',
-  //       upsert: false,
-  //     });
+    imageUrl = data.publicUrl;
+  }
 
-  //   if (errorUpload) throw new Error(errorUpload.message);
+  // SEARCH SUB CATEGORY ID w subCategory string
+  const {
+    data: isSubCategoryExist,
+    error: errorSubCategoryId,
+    status: statusSubCategoryId,
+  } = await supabase
+    .from(constants('TABLE_SUB_CATEGORIES'))
+    .select('id')
+    .eq('subCategory', subCategory)
+    .single();
 
-  //   // GET URL
-  //   const { data } = await supabase.storage
-  //     .from(questionsStorageName)
-  //     .getPublicUrl(filePath);
+  if (errorSubCategoryId && errorSubCategoryId.code !== ('PGRST116' as const)) {
+    return { statusSubCategoryId, message: errorSubCategoryId.message };
+  }
 
-  //   // UPDATE TABLE
-  // }
+  // define subCategory_id value w existing id or new one
+  if (!!isSubCategoryExist) {
+    subCategory_id = isSubCategoryExist.id;
+  } else {
+    const {
+      data: newSubCategory,
+      error: errorNewSubCategory,
+      status: statusNewSubCategory,
+    } = await supabase
+      .from(constants('TABLE_SUB_CATEGORIES'))
+      .insert([{ subCategory }])
+      .select('id');
+
+    if (errorNewSubCategory) {
+      return { statusNewSubCategory, message: errorNewSubCategory.message };
+    }
+
+    subCategory_id = newSubCategory[0].id;
+  }
+
+  // all payload key is required except imageUrl
+  const payload = {
+    ...filteredValidatedObj,
+    subCategory_id,
+    user_id: session.user.id,
+    imageUrl,
+  };
+
+  // INSERT A QUESTION
+  const { error: errorInsertQuestion, status: statusInsertQuestion } =
+    await supabase.from(constants('TABLE_QUESTIONS')).insert(payload);
+
+  if (errorInsertQuestion) {
+    return { statusInsertQuestion, message: errorInsertQuestion.message };
+  }
 
   return { status: 'success' };
 };

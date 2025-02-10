@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { logErrorMessages } from '@/lib/utils';
 import { WrongAnswers } from './WrongAnswers';
 import { FormLoadingState } from './FormLoadingState';
+import { useRouter } from 'next/navigation';
 
 const DEFAULT_VALUE = {
   image: undefined,
@@ -51,9 +52,10 @@ export const FormSubmitQuestion = () => {
   const [savedFormData, setSavedFormData, clearSavedFormData] = useLocalStorage<
     z.infer<typeof schemaQuestion>
   >('formData', DEFAULT_VALUE);
+  const router = useRouter();
 
   const myForm = useForm<z.infer<typeof schemaQuestion>>({
-    // resolver: zodResolver(schemaQuestion),
+    resolver: zodResolver(schemaQuestion),
     defaultValues: savedFormData,
   });
 
@@ -82,8 +84,9 @@ export const FormSubmitQuestion = () => {
     }
 
     // SUCCESS HANDLING
-    // clearSavedFormData();
-    // myForm.reset();
+    clearSavedFormData();
+    myForm.reset();
+    router.push('/submitted-questions');
   }
 
   const save = (
@@ -218,7 +221,7 @@ export const FormSubmitQuestion = () => {
           {/* SUBCATEGORY DROPDOWN INPUT */}
           <SubCategory
             control={myForm.control}
-            name={'subCategory'}
+            name={'subCategory' as const}
             value={myForm.watch('subCategory')}
             setValue={myForm.setValue}
             handleChange={handleChange}

@@ -16,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from '../ui/form';
+import constants from '@/utils/constants';
 
 export function SubCategory({
   setValue,
@@ -26,13 +27,15 @@ export function SubCategory({
 }: {
   value: string;
   setValue: UseFormSetValue<z.infer<typeof schemaQuestion>>;
-  name: keyof z.infer<typeof schemaQuestion>;
+  name: keyof Pick<z.infer<typeof schemaQuestion>, 'subCategory'>; // basically this mean subCategory, sorry to complicated this, i only want the string come from schemaQuestion but the normal way cause a trouble fo some reason;
   control: Control<z.infer<typeof schemaQuestion>, any>;
   handleChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
 }) {
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<
+    { id: string; subCategory: string }[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpenContent, setIsOpenContent] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -41,13 +44,13 @@ export function SubCategory({
     if (term) {
       const supabase = await createClient();
       const { data, error } = await supabase
-        .from('categories') // Replace with your table name
-        .select('name') // Replace with your column name
-        .ilike('name', `%${term}%`) // Case-insensitive search
-        .limit(10); // Limit the number of results
+        .from(constants('TABLE_SUB_CATEGORIES'))
+        .select('id, subCategory')
+        .ilike('subCategory', `%${term}%`) // Case-insensitive search
+        .limit(10);
 
       if (!error && data) {
-        setCategories(data.map((item) => item.name));
+        setCategories(data);
       }
     } else {
       setCategories([]);
@@ -56,21 +59,25 @@ export function SubCategory({
   }, 1000); // 1s delay
 
   const createNewCategory = async () => {
-    if (value.trim()) {
-      setIsLoading(true);
-      const supabase = await createClient();
+    try {
+      if (value.trim()) {
+        setIsLoading(true);
+        const supabase = await createClient();
 
-      const { data, error } = await supabase
-        .from('categories')
-        .insert([{ name: value }])
-        .select();
+        const { data, error } = await supabase
+          .from(constants('TABLE_SUB_CATEGORIES'))
+          .insert([{ subCategory: value }])
+          .select('id, subCategory');
 
-      if (!error && data) {
-        setCategories([data[0].name, ...categories]);
-        setValue(name, data[0].name);
+        if (!error && data) {
+          setCategories([data[0], ...categories]);
+          setValue(name, data[0].subCategory);
+        }
+        setIsLoading(false);
+        setIsOpenContent(false);
       }
-      setIsLoading(false);
-      setIsOpenContent(false);
+    } catch (error) {
+      console.log('ERROR', error);
     }
   };
 
@@ -133,18 +140,18 @@ export function SubCategory({
                       Loading
                     </div>
                   ) : categories.length > 0 ? (
-                    categories.map((category) => (
+                    categories.map(({ subCategory }) => (
                       <div
-                        key={category}
+                        key={subCategory}
                         className="hover:bg-accent dark:hover:bg-accent-foreground focus:bg-accent dark:focus:bg-accent-foreground rounded-sm transition-colors flex w-full cursor-pointer select-none items-center py-1.5 pl-2 pr-8 text-sm outline-none focus:text-accent"
                         onClick={(e) => {
-                          setValue(name, category);
+                          setValue(name, subCategory);
                           setIsOpenContent(false);
                           e.preventDefault();
                           return;
                         }}
                       >
-                        {category}
+                        {subCategory}
                       </div>
                     ))
                   ) : value.length > 0 ? (
