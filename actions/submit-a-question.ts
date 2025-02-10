@@ -2,9 +2,8 @@
 
 import { schemaQuestion } from '@/types/question';
 import { getUserSession } from './auth';
-import { randomBytes } from 'crypto';
 import { createClient } from '@/utils/supabase/server';
-import { questionsStorageName } from '@/utils/constants';
+
 import { z } from 'zod';
 
 export type State =
@@ -31,7 +30,10 @@ export const submitAQuestionAction = async (
   if (!validatedFields.success) {
     return {
       status: 'error',
-      message: validatedFields.error.flatten().fieldErrors,
+      message: validatedFields.error.flatten().fieldErrors as {
+        string: string[];
+      },
+      errorType: 'zod-error' as const,
     };
   }
   const supabase = await createClient();

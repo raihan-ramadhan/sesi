@@ -7,15 +7,8 @@ import { useUserStore } from '@/stores/useUserStore';
 import { User } from '@/types/auth';
 import { deleteImage } from '@/utils/client/deleteImage';
 import { uploadImage } from '@/utils/client/uploadUmage';
-import {
-  avatarsStorageName,
-  storageName,
-  tableUserProfileName,
-} from '@/utils/constants';
-import { createClient } from '@/utils/supabase/client';
-import { randomBytes } from 'crypto';
+import constants from '@/utils/constants';
 import { ImageUp, LoaderCircle, Save, Trash, UserRound } from 'lucide-react';
-import Error from 'next/error';
 import Image from 'next/image';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
@@ -48,7 +41,7 @@ export default function UploadAvatar({
           file,
           keyItem: 'avatarUrl',
           oldImage: initialData.avatarUrl,
-          storageName: avatarsStorageName,
+          storageName: constants('AVATARS_STORAGE_NAME'),
         });
 
         toast({
@@ -182,7 +175,7 @@ export default function UploadAvatar({
                     ref={fileInputRef}
                     disabled={isPending}
                     onChange={handleProfilePicChange}
-                    // accept="image/jpeg, image/png, image/webp"
+                    accept="image/jpeg, image/png, image/webp"
                   />
                 </Button>
                 {!!user.avatarUrl || !!initialData.avatarUrl ? (

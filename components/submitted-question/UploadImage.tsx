@@ -9,7 +9,7 @@ import {
 } from '../ui/form';
 import { Input } from '../ui/input';
 import { schemaQuestion } from '@/types/question';
-import { Control, UseFormSetValue } from 'react-hook-form';
+import { Control, UseFormReturn } from 'react-hook-form';
 import Image from 'next/image';
 import { Trash } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -17,11 +17,11 @@ import { useRef, useState } from 'react';
 export const UploadQuestionImage = ({
   control,
   name,
-  handleFileChange,
+  myForm,
 }: {
   name: keyof z.infer<typeof schemaQuestion>;
   control: Control<z.infer<typeof schemaQuestion>, any>;
-  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  myForm: UseFormReturn<z.infer<typeof schemaQuestion>>;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string>();
@@ -30,6 +30,7 @@ export const UploadQuestionImage = ({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setPreview(URL.createObjectURL(file));
+      myForm.setValue(name, file);
     }
   };
 
@@ -58,6 +59,7 @@ export const UploadQuestionImage = ({
                     if (fileInputRef.current) {
                       fileInputRef.current.value = '';
                     }
+                    myForm.setValue(name, undefined);
                   }}
                   className="absolute group top-2 right-2 cursor-pointer bg-black/10 hover:bg-destructive backdrop-blur-sm p-1.5 rounded-sm"
                 >
@@ -68,14 +70,11 @@ export const UploadQuestionImage = ({
 
             <FormControl>
               <Input
-                placeholder="Write Your Question..."
                 {...field}
+                placeholder="Write Your Question..."
                 value={undefined}
                 ref={fileInputRef}
-                onChange={(e) => {
-                  handleProfilePicChange(e);
-                  handleFileChange(e);
-                }}
+                onChange={handleProfilePicChange}
                 accept="image/jpeg, image/png, image/webp"
                 type="file"
               />

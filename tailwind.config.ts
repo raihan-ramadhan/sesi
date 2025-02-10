@@ -67,18 +67,20 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       animation: {
-        'custom-open': 'customDropdownOpen 0.2s ease-in forwards',
+        'custom-open': 'customDropdownOpen 0.15s ease-in forwards',
       },
       keyframes: {
         customDropdownOpen: {
           '0%': {
             visibility: 'hidden',
-            transform: 'scale(0.9) translateY(-100%)',
+            transform: 'scale(0.95) translateY(-100%)',
+            opacity: '0',
           },
           '1%': {
             visibility: 'visible',
           },
           '100%': {
+            opacity: '1',
             transform: 'scale(1) translateY(-100%)',
           },
         },

@@ -5,7 +5,7 @@ import { getUserSession } from './auth';
 import { z } from 'zod';
 import { User, GENDER_VALUES } from '@/types/auth';
 import { getUserProfiles } from './user-profiles';
-import { tableUserProfileName } from '@/utils/constants';
+import constants from '@/utils/constants';
 
 const schemaAccount = z.object({
   userName: z
@@ -84,7 +84,7 @@ export async function updateAccountData({
 
   const supabase = await createClient();
   const { error: updateError, data } = await supabase
-    .from(tableUserProfileName)
+    .from(constants('TABLE_USER_PROFILE_NAME'))
     .update(payload)
     .eq('email', isAuthenticated.user.email)
     .select()

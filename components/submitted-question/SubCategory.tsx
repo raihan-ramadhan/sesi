@@ -35,7 +35,6 @@ export function SubCategory({
   const [categories, setCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpenContent, setIsOpenContent] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const debouncedSearch = debounce(async (term: string) => {
@@ -118,10 +117,10 @@ export function SubCategory({
       control={control}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Sub-Category</FormLabel>
+          <FormLabel htmlFor={name}>Sub-Category</FormLabel>
           <FormControl>
             {/* DROPDOWN OF RESULT */}
-            <div className="relative h-[200px]" ref={dropdownRef}>
+            <div className="relative" ref={dropdownRef}>
               <div
                 className={cn(
                   'absolute w-full z-50 rounded-md border bg-popover text-popover-foreground shadow-md outline-none p-1 !left-0 !-top-1',
@@ -168,11 +167,11 @@ export function SubCategory({
               <div className="relative w-full">
                 <Input
                   {...field}
-                  ref={inputRef}
                   placeholder="Search a sub-category..."
                   className="relative"
                   type="text"
                   onChange={onChange}
+                  id={name}
                 />
                 {isLoading ? (
                   <div className="absolute z-10 top-1/2 -translate-y-1/2 right-4">

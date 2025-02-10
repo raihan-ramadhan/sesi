@@ -1,10 +1,19 @@
 import { randomBytes } from 'crypto';
 import { createClient } from '../supabase/client';
-import { tableUserProfileName } from '../constants';
+import constants from '../constants';
 import { z } from 'zod';
-import { imageSchema } from '@/types/image';
+import { ALLOWED_TYPES, MAX_SIZE } from '../image';
 
-export const uploadImageSchema = z.object({ file: imageSchema });
+export const uploadImageSchema = z.object({
+  file: z
+    .instanceof(File)
+    .refine((file) => ALLOWED_TYPES.includes(file.type), {
+      message: 'Hanya file .jpg, .jpeg, .png, and .webp yg diterima.',
+    })
+    .refine((file) => file.size <= MAX_SIZE, {
+      message: 'Ukuran max file adalah 5MB.',
+    }),
+});
 
 export const uploadImage = async ({
   file,
@@ -48,7 +57,7 @@ export const uploadImage = async ({
 
   // UPDATE TABLE
   const { error: updateError } = await supabase
-    .from(tableUserProfileName)
+    .from(constants('TABLE_USER_PROFILE_NAME'))
     .update({ [keyItem]: data.publicUrl })
     .eq('email', isAuthenticated.data.user.email)
     .select()

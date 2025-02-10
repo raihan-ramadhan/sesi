@@ -8,15 +8,9 @@ import { useUserStore } from '@/stores/useUserStore';
 import { User } from '@/types/auth';
 import { deleteImage } from '@/utils/client/deleteImage';
 import { uploadImage } from '@/utils/client/uploadUmage';
-import {
-  bannersStorageName,
-  storageName,
-  tableUserProfileName,
-} from '@/utils/constants';
-import { createClient } from '@/utils/supabase/client';
+import constants from '@/utils/constants';
 import { ImageUp, LoaderCircle, Save, Trash, UserRound } from 'lucide-react';
 import { StaticImport } from 'next/dist/shared/lib/get-img-props';
-import Error from 'next/error';
 import Image from 'next/image';
 import { useEffect, useRef, useState, useTransition } from 'react';
 
@@ -55,7 +49,7 @@ export default function UploadBanner({
           file,
           keyItem: 'bannerUrl',
           oldImage: initialData.bannerUrl,
-          storageName: bannersStorageName,
+          storageName: constants('BANNERS_STORAGE_NAME'),
         });
 
         // successed

@@ -28,69 +28,60 @@ import {
 import { UploadQuestionImage } from './UploadImage';
 import { useEffect, useState } from 'react';
 import useLocalStorage from '@/hooks/use-local-storage';
+import { useToast } from '@/hooks/use-toast';
+import { logErrorMessages } from '@/lib/utils';
+import { WrongAnswers } from './WrongAnswers';
+import { FormLoadingState } from './FormLoadingState';
 
-type ErrorObject = {
-  [K in keyof z.infer<typeof schemaQuestion>]?: string[];
+const DEFAULT_VALUE = {
+  image: undefined,
+  category: undefined as any,
+  questionLine: '',
+  rightAnswer: '',
+  wrongAnswer1: '',
+  wrongAnswer2: '',
+  wrongAnswer3: '',
+  wrongAnswer4: '',
+  subCategory: '',
 };
 
 export const FormSubmitQuestion = () => {
+  const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [savedFormData, setSavedFormData, clearSavedFormData] = useLocalStorage<
     z.infer<typeof schemaQuestion>
-  >('formData', {
-    image: undefined,
-    category: undefined as any,
-    questionLine: '',
-    rightAnswer: '',
-    wrongAnswer1: '',
-    wrongAnswer2: '',
-    wrongAnswer3: '',
-    wrongAnswer4: '',
-    subCategory: '',
-  });
+  >('formData', DEFAULT_VALUE);
 
   const myForm = useForm<z.infer<typeof schemaQuestion>>({
-    resolver: zodResolver(schemaQuestion),
+    // resolver: zodResolver(schemaQuestion),
     defaultValues: savedFormData,
   });
 
-  const { errors } = myForm.formState;
-
-  // Check if any of the inputs have errors
-  const wrongAnswerHasErrors =
-    errors.wrongAnswer1 ||
-    errors.wrongAnswer2 ||
-    errors.wrongAnswer3 ||
-    errors.wrongAnswer4;
-
   async function onSubmit(values: z.infer<typeof schemaQuestion>) {
-    const { status, message } = await submitAQuestionAction(values);
+    const { status, message, errorType } = await submitAQuestionAction(values);
 
+    // ERROR HANDLING
     if (status !== 'success') {
-      function logErrorMessages(errorObject: ErrorObject) {
-        // Extract all error messages from the object
-        const errors: string[] = [];
-
-        for (const key in errorObject) {
-          const value = errorObject[key as keyof ErrorObject];
-          if (Array.isArray(value)) {
-            errors.push(...value);
-          }
-        }
-
-        // Combine all error messages into a single sentence
-        const errorSentence = errors.join('. ') + '.';
-
-        // Log the combined sentence to the console
-        return errorSentence;
+      if (errorType === 'zod-error') {
+        toast({
+          variant: 'destructive',
+          title: 'Gagal!',
+          description: logErrorMessages(message) ?? 'Terjadi sebuah kesalahan',
+        });
+        return;
       }
-      if (typeof message !== 'string') {
-        console.log(logErrorMessages(message as ErrorObject));
-      }
-      console.log(message);
+
+      toast({
+        variant: 'destructive',
+        title: 'Gagal!',
+        description:
+          typeof message === 'string' ? message : 'Terjadi sebuah kesalahan',
+      });
+
       return;
     }
 
+    // SUCCESS HANDLING
     // clearSavedFormData();
     // myForm.reset();
   }
@@ -118,26 +109,13 @@ export const FormSubmitQuestion = () => {
     save(name as keyof z.infer<typeof schemaQuestion>, value);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = e.target.name;
-    const file = e.target.files?.[0] || null;
-    save(name as keyof z.infer<typeof schemaQuestion>, file as File);
-  };
-
-  const inputs = [
-    'wrongAnswer1',
-    'wrongAnswer2',
-    'wrongAnswer3',
-    'wrongAnswer4',
-  ] as const;
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   if (!isMounted) {
     // LOADING STATE
-    return null;
+    return <FormLoadingState />;
   }
 
   return (
@@ -168,7 +146,7 @@ export const FormSubmitQuestion = () => {
           <UploadQuestionImage
             control={myForm.control}
             name={'image'}
-            handleFileChange={handleFileChange}
+            myForm={myForm}
           />
 
           {/* RIGHT ANSWER INPUT */}
@@ -192,53 +170,11 @@ export const FormSubmitQuestion = () => {
           />
 
           {/* WRONG ASNWER INPUT NO 1-4 */}
-          <div
-            className="flex w-full flex-col gap-2"
-            role="group"
-            aria-labelledby="group-label"
-          >
-            <FormLabel
-              className={wrongAnswerHasErrors ? 'text-red-500' : ''}
-              onClick={() => {
-                for (const inputName of inputs) {
-                  if (
-                    !myForm.control._formValues[inputName] ||
-                    errors[inputName]
-                  ) {
-                    document.getElementById(inputName)?.focus();
-                    break;
-                  }
-                }
-              }}
-            >
-              Wrong Answer
-            </FormLabel>
-            <div className="grid grid-flow-col grid-rows-2 gap-4">
-              {inputs.map((name, index) => {
-                return (
-                  <FormField
-                    key={index}
-                    control={myForm.control}
-                    name={name}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            placeholder="Write Your Wrong Answer no 1..."
-                            {...field}
-                            id={name}
-                            onChange={handleChange}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                );
-              })}
-            </div>
-            <FormDescription>This is your Wrong Answer.</FormDescription>
-          </div>
+          <WrongAnswers
+            errors={myForm.formState.errors}
+            myForm={myForm}
+            handleChange={handleChange}
+          />
 
           {/* CATEGORY INPUT */}
           <FormField
@@ -246,7 +182,7 @@ export const FormSubmitQuestion = () => {
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel htmlFor="category">Category</FormLabel>
                 <FormControl>
                   <Select
                     {...field}
@@ -254,7 +190,10 @@ export const FormSubmitQuestion = () => {
                       handleSelectChange('category', value)
                     }
                   >
-                    <SelectTrigger className="min-w-[180px] w-full placeholder:text-red-300">
+                    <SelectTrigger
+                      id="category"
+                      className="min-w-[180px] w-full placeholder:text-red-300"
+                    >
                       <SelectValue placeholder="Select a Category" />
                     </SelectTrigger>
                     <SelectContent>

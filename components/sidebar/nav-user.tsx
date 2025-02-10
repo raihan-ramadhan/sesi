@@ -9,7 +9,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,11 +25,10 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
 import { useEffect, useTransition } from 'react';
 import { signOut } from '@/actions/auth';
 import { createClient } from '@/utils/supabase/client';
-import { tableUserProfileName } from '@/utils/constants';
+import constants from '@/utils/constants';
 import { useUserStore } from '@/stores/useUserStore';
 import { User } from '@/types/auth';
 import Image from 'next/image';
@@ -62,7 +60,7 @@ export function NavUser({ initialData }: { initialData: User }) {
       }
 
       const { error, data } = await supabase
-        .from(tableUserProfileName)
+        .from(constants('TABLE_USER_PROFILE_NAME'))
         .select('*')
         .eq('email', dataUser.user?.email)
         .limit(1)

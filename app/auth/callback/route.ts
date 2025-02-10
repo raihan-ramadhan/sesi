@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 // The client you created from the Server-Side Auth instructions
 import { createClient } from '@/utils/supabase/server';
-import { tableUserProfileName } from '@/utils/constants';
+import constants from '@/utils/constants';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       }
 
       const { data: existingUser } = await supabase
-        .from(tableUserProfileName)
+        .from(constants('TABLE_USER_PROFILE_NAME'))
         .select('*')
         .eq('email', data.user?.email)
         .limit(1)
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
 
         // create user profiles
         const { error: insertError } = await supabase
-          .from(tableUserProfileName)
+          .from(constants('TABLE_USER_PROFILE_NAME'))
           .insert(payload);
 
         if (insertError) {
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
       if (!existingUser?.userName) {
         // update user that not have userName bc they signed up in with email
         const { error: updateUsernameError } = await supabase
-          .from(tableUserProfileName)
+          .from(constants('TABLE_USER_PROFILE_NAME'))
           .update({ userName: data?.user?.user_metadata?.name ?? '' })
           .eq('email', data.user?.email);
 

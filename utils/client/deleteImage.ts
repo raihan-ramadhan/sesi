@@ -1,4 +1,4 @@
-import { storageName, tableUserProfileName } from '../constants';
+import constants from '../constants';
 import { createClient } from '../supabase/client';
 
 export const deleteImage = async ({
@@ -14,7 +14,7 @@ export const deleteImage = async ({
     throw new Error('Silahkan login terlebih dahulu');
 
   const { error: updateError } = await supabase
-    .from(tableUserProfileName)
+    .from(constants('TABLE_USER_PROFILE_NAME'))
     .update({ [keyItem]: '' })
     .eq('email', isAuthenticated.data.user.email)
     .select()
@@ -25,7 +25,7 @@ export const deleteImage = async ({
   const array = url.split('/');
   const pathName = `${array[array.length - 2]}/${array[array.length - 1]}`;
   const { error: deleteImageError } = await supabase.storage
-    .from(storageName)
+    .from(constants('STORAGE_NAME'))
     .remove([pathName]);
 
   if (deleteImageError) throw new Error(deleteImageError.message);

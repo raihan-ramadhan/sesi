@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { imageSchema } from './image';
+import { ALLOWED_TYPES, MAX_SIZE } from '@/utils/image';
 
 export const CATEGORIES_VALUES = ['TIU', 'TWK', 'TKP'] as const;
 
@@ -26,7 +26,15 @@ export const schemaQuestion = z.object({
     .min(1, {
       message: 'Question Line is required.',
     }),
-  image: imageSchema,
+  image: z
+    .instanceof(File)
+    .optional()
+    .refine((file) => !file || ALLOWED_TYPES.includes(file.type), {
+      message: 'hanya file .jpg, .jpeg, .png, and .webp yg diterima.',
+    })
+    .refine((file) => !file || file.size <= MAX_SIZE, {
+      message: 'Ukuran max file adalah 5MB.',
+    }),
   rightAnswer: z
     .string({
       invalid_type_error: 'Invalid Right Answer',

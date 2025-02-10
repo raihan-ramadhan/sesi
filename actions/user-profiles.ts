@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/server';
 import { getUserSession } from './auth';
 import { User } from '@/types/auth';
-import { tableUserProfileName } from '@/utils/constants';
+import constants from '@/utils/constants';
 
 export async function getUserProfiles(email: string) {
   const isAuthenticated = await getUserSession();
@@ -15,7 +15,7 @@ export async function getUserProfiles(email: string) {
   const supabase = await createClient();
 
   const { data, error, status } = await supabase
-    .from(tableUserProfileName)
+    .from(constants('TABLE_USER_PROFILE_NAME'))
     .select('*')
     .eq('email', email)
     .limit(1)
