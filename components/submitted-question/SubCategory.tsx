@@ -5,7 +5,7 @@ import { createClient } from '@/utils/supabase/client';
 import { LoaderCircle } from 'lucide-react';
 import { ScrollArea } from '../ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { z } from 'zod';
 import debounce from 'debounce';
 import {
@@ -28,7 +28,7 @@ export function SubCategory({
   value: string;
   setValue: UseFormSetValue<z.infer<typeof schemaQuestion>>;
   name: keyof Pick<z.infer<typeof schemaQuestion>, 'subCategory'>; // basically this mean subCategory, sorry to complicated this, i only want the string come from schemaQuestion but the normal way cause a trouble fo some reason;
-  control: Control<z.infer<typeof schemaQuestion>, any>;
+  control: Control<z.infer<typeof schemaQuestion>>;
   handleChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
@@ -56,7 +56,7 @@ export function SubCategory({
       setCategories([]);
     }
     setIsLoading(false);
-  }, 1000); // 1s delay
+  }, 2000); // 1s delay
 
   const createNewCategory = async () => {
     try {
@@ -116,6 +116,7 @@ export function SubCategory({
 
   useEffect(() => {
     return () => debouncedSearch.clear();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -163,7 +164,7 @@ export function SubCategory({
                         className="hover:bg-accent dark:hover:bg-accent-foreground focus:bg-accent dark:focus:bg-accent-foreground rounded-sm transition-colors flex w-full items-center py-1.5 pl-2 pr-8 text-sm cursor-pointer"
                         onClick={createNewCategory}
                       >
-                        "{value}"
+                        &quot;{value}&quot;
                       </div>
                     </div>
                   ) : null}
@@ -189,7 +190,7 @@ export function SubCategory({
             </div>
           </FormControl>
           <FormDescription>
-            This is your Question's Sub-Category.
+            This is your Question&apos;s Sub-Category.
           </FormDescription>
           <FormMessage />
         </FormItem>

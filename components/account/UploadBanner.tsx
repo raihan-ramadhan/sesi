@@ -2,17 +2,17 @@
 
 import { GradientOverlay } from '@/components/gradient-overlay';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { useUserStore } from '@/stores/useUserStore';
 import { User } from '@/types/auth';
 import { deleteImage } from '@/utils/client/deleteImage';
 import { uploadImage } from '@/utils/client/uploadUmage';
 import constants from '@/utils/constants';
-import { ImageUp, LoaderCircle, Save, Trash, UserRound } from 'lucide-react';
+import { ImageUp, LoaderCircle, Save, Trash } from 'lucide-react';
 import { StaticImport } from 'next/dist/shared/lib/get-img-props';
 import Image from 'next/image';
 import { useEffect, useRef, useState, useTransition } from 'react';
+import useToastResult from '@/hooks/use-toast-result';
 
 export default function UploadBanner({
   initialData: initialDataParam,
@@ -25,7 +25,7 @@ export default function UploadBanner({
   const [initialData, setInitialData] = useState<User>(initialDataParam);
   const [file, setFile] = useState<File | undefined>(undefined);
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
+  const { toastResHandler } = useToastResult();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const imgSrc: string | StaticImport = !!user.bannerUrl
@@ -53,20 +53,16 @@ export default function UploadBanner({
         });
 
         // successed
-        toast({
-          title: 'Berhasil!',
-          description: 'Foto profil berhasil di update!',
+        toastResHandler({
+          status: constants('STATUS_SUCCESS'),
+          successMessage: 'Foto profil berhasil di update!',
         });
         setUser({ bannerUrl: data.publicUrl });
         setFile(undefined);
         setInitialData((prev) => ({ ...prev, bannerUrl: data.publicUrl }));
-      } catch (error: any) {
+      } catch (error: unknown) {
         // failed
-        toast({
-          variant: 'destructive',
-          title: 'Gagal!',
-          description: error?.message ?? 'Terjadi kesalahan saat mengupload',
-        });
+        toastResHandler({ status: 'error', error });
         setUser({ bannerUrl: initialData.bannerUrl });
         setFile(undefined);
       }
@@ -78,18 +74,14 @@ export default function UploadBanner({
       try {
         await deleteImage({ url: user.bannerUrl, keyItem: 'bannerUrl' });
 
-        toast({
-          title: 'Berhasil!',
-          description: 'Gambar banner berhasil di hapus!',
+        toastResHandler({
+          status: constants('STATUS_SUCCESS'),
+          successMessage: 'Gambar banner berhasil di hapus!!',
         });
         setUser({ bannerUrl: '' });
         setInitialData((prev) => ({ ...prev, bannerUrl: '' }));
-      } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: 'Gagal!',
-          description: error?.message ?? 'Terjadi kesalahan saat mengupload',
-        });
+      } catch (error: unknown) {
+        toastResHandler({ status: 'error', error });
       }
     });
   };

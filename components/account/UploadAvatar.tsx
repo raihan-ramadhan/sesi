@@ -1,8 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { useUserStore } from '@/stores/useUserStore';
 import { User } from '@/types/auth';
 import { deleteImage } from '@/utils/client/deleteImage';
@@ -11,6 +10,7 @@ import constants from '@/utils/constants';
 import { ImageUp, LoaderCircle, Save, Trash, UserRound } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useRef, useState, useTransition } from 'react';
+import useToastResult from '@/hooks/use-toast-result';
 
 export default function UploadAvatar({
   bannerHeight,
@@ -23,7 +23,7 @@ export default function UploadAvatar({
   const [initialData, setInitialData] = useState<User>(initialDataParam);
   const [file, setFile] = useState<File | undefined>(undefined);
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToast();
+  const { toastResHandler } = useToastResult();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,22 +44,16 @@ export default function UploadAvatar({
           storageName: constants('AVATARS_STORAGE_NAME'),
         });
 
-        toast({
-          title: 'Berhasil!',
-          description: 'Foto profil berhasil di update!',
+        toastResHandler({
+          status: constants('STATUS_SUCCESS'),
+          successMessage: 'Foto profil berhasil di update!',
         });
+
         setUser({ avatarUrl: data.publicUrl });
         setInitialData((prev) => ({ ...prev, avatarUrl: data.publicUrl }));
         setFile(undefined);
-      } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: 'Gagal!',
-          description:
-            error?.props?.title ??
-            error?.message ??
-            'Terjadi kesalahan saat mengupload',
-        });
+      } catch (error: unknown) {
+        toastResHandler({ status: 'error', error });
         setUser({ avatarUrl: initialData.avatarUrl });
         setFile(undefined);
       }
@@ -70,22 +64,15 @@ export default function UploadAvatar({
     startTransition(async () => {
       try {
         await deleteImage({ url: user.avatarUrl, keyItem: 'avatarUrl' });
-
-        toast({
-          title: 'Berhasil!',
-          description: 'Foto profil berhasil di hapus!',
+        toastResHandler({
+          status: constants('STATUS_SUCCESS'),
+          successMessage: 'Foto profil berhasil di hapus!',
         });
+
         setUser({ avatarUrl: '' });
         setInitialData((prev) => ({ ...prev, avatarUrl: '' }));
-      } catch (error: any) {
-        toast({
-          variant: 'destructive',
-          title: 'Gagal!',
-          description:
-            error?.props?.title ??
-            error?.message ??
-            'Terjadi kesalahan saat mengupload',
-        });
+      } catch (error: unknown) {
+        toastResHandler({ status: 'error', error });
       }
     });
   };

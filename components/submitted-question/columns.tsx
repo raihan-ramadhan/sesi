@@ -1,12 +1,10 @@
 'use client';
 
-import { Question } from '@/types/question';
+import { QuestTable } from '@/types/question';
 import { ColumnDef, Getter } from '@tanstack/react-table';
+import { MoreButtonTable } from './MoreButtonTable';
 
-// This type is used to define the shape of our data.
-// You can use a Zod schema here if you want.
-
-export const columns: ColumnDef<Question>[] = [
+export const columns: ColumnDef<QuestTable>[] = [
   {
     accessorKey: 'question',
     header: 'Question',
@@ -33,5 +31,17 @@ export const columns: ColumnDef<Question>[] = [
   {
     accessorKey: 'subCategory',
     header: 'Sub-Category',
+  },
+  {
+    id: 'actions',
+    cell: ({ row, table }) => {
+      const {
+        id,
+        creator: { name },
+      } = row.original;
+      const setData = table.options.meta?.setData;
+
+      return <MoreButtonTable questionId={id} setData={setData} name={name} />;
+    },
   },
 ];

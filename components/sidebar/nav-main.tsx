@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  BookOpenText,
-  ChevronRight,
-  LayoutDashboard,
-  type LucideIcon,
-} from 'lucide-react';
+import { ChevronRight, type LucideIcon } from 'lucide-react';
 
 import {
   Collapsible,

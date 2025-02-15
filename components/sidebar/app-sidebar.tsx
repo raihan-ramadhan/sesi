@@ -5,9 +5,7 @@ import {
   ChartSpline,
   Frame,
   LayoutDashboard,
-  Map,
   PencilRuler,
-  PieChart,
   SquareTerminal,
 } from 'lucide-react';
 

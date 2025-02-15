@@ -3,6 +3,7 @@ import { createClient } from '../supabase/client';
 import constants from '../constants';
 import { z } from 'zod';
 import { ALLOWED_TYPES, MAX_SIZE } from '../image';
+import { logErrorMessages } from '../utils';
 
 export const uploadImageSchema = z.object({
   file: z
@@ -29,7 +30,11 @@ export const uploadImage = async ({
   const validatedFields = uploadImageSchema.safeParse({ file });
   if (!validatedFields.success)
     throw new Error(
-      validatedFields.error.flatten().fieldErrors.file?.[0] as string,
+      logErrorMessages(
+        validatedFields.error.flatten().fieldErrors as {
+          string: string[];
+        },
+      ),
     );
 
   const validatedFile: File = validatedFields.data.file;

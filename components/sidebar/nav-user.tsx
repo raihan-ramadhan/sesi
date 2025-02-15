@@ -5,6 +5,7 @@ import {
   Bell,
   ChevronsUpDown,
   CreditCard,
+  LoaderCircle,
   LogOut,
   Sparkles,
 } from 'lucide-react';
@@ -74,7 +75,7 @@ export function NavUser({ initialData }: { initialData: User }) {
       setUser(data);
     }
     getUser();
-  }, []);
+  }, [setUser]);
 
   return (
     <SidebarMenu>
@@ -173,7 +174,11 @@ export function NavUser({ initialData }: { initialData: User }) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
-              <LogOut />
+              {isPending ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                <LogOut />
+              )}
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

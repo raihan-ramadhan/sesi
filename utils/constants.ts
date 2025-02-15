@@ -8,6 +8,7 @@ const obj = {
   TABLE_USER_PROFILE_NAME: `user_profiles`,
   TABLE_SUB_CATEGORIES: `sub_categories`,
   TABLE_QUESTIONS: `questions`,
+  STATUS_SUCCESS: 'success',
 } as const;
 
 export default function constants(objKey: keyof typeof obj) {

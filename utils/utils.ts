@@ -22,7 +22,11 @@ export const toProperCase = (str: string) => {
   // Capitalize the first letter of each word and lowercase the rest
   const properCaseStr = words
     .map((word) => {
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      if (word.length > 1) {
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      }
+
+      return word;
     })
     .join(' '); // Join the words back with spaces
 

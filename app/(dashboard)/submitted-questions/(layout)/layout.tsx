@@ -1,4 +1,5 @@
-import { FormSubmitQuestion } from '@/components/submitted-question/FormSubmitQuestion';
+import { getAccountData } from '@/actions/account';
+import { redirect } from 'next/navigation';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,8 +10,25 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { getPathname } from '@/utils/server-only-utils';
+import { toProperCase } from '@/utils/utils';
 
-export const SubmitAQuestion = () => {
+export default async function QuestionsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { data, message } = await getAccountData();
+
+  if (!data) {
+    console.error({ error: message });
+    redirect('/sign-in');
+  }
+
+  const pathname = await getPathname();
+  const lastPath = pathname.split('/')[pathname.split('/').length - 1];
+  const currPage = toProperCase(lastPath.split('-').join(' '));
+
   return (
     <SidebarInset>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -26,16 +44,15 @@ export const SubmitAQuestion = () => {
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Submit a Question</BreadcrumbPage>
+                <BreadcrumbPage>{currPage}</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
       </header>
       <div className="grid gap-6 mx-auto w-full p-[0_16px_16px_16px]">
-        {/* FORM SUBMIT A QUESTION */}
-        <FormSubmitQuestion />
+        {children}
       </div>
     </SidebarInset>
   );
-};
+}

@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { ALLOWED_TYPES, MAX_SIZE } from '@/utils/image';
 
-export const CATEGORIES_VALUES = ['TIU', 'TWK', 'TKP'] as const;
+export const CATEGORIES_VALUES = ['TWK', 'TIU', 'TKP'] as const;
 
 export type Category = (typeof CATEGORIES_VALUES)[number];
 
-export type Question = {
+export type QuestTable = {
   id: string;
   question: string;
   rightAnswer: string;
@@ -26,6 +26,9 @@ export const schemaQuestion = z.object({
     .min(1, {
       message: 'Question Line is required.',
     }),
+  imageUrl: z.string({
+    invalid_type_error: 'Invalid ImageUrl',
+  }),
   image: z
     .instanceof(File)
     .optional()
@@ -82,3 +85,21 @@ export const schemaQuestion = z.object({
       message: 'Subcategory is required.',
     }),
 });
+
+export type ResQuestion = Omit<
+  z.infer<typeof schemaQuestion>,
+  'image' | 'subCategory'
+> & {
+  id: string;
+  created_at: string;
+  subCategory_id: string;
+  user_id: string;
+};
+
+export type SubCategoryResQuestion = {
+  sub_categories: { subCategory: string };
+};
+
+export type UserNameResQuestion = {
+  user_profiles: { userName: string };
+};

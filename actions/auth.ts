@@ -1,6 +1,9 @@
 'use server';
 
+import { ActionResponse } from '@/types/global';
+import constants from '@/utils/constants';
 import { createClient } from '@/utils/supabase/server';
+import { logErrorMessages } from '@/utils/utils';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -27,7 +30,7 @@ export async function getUserSession() {
   }
 
   return {
-    status: 'success',
+    status: constants('STATUS_SUCCESS'),
     user: data.user,
   };
 }
@@ -50,9 +53,13 @@ export async function signInWithGoogle() {
 }
 
 const schemaSendMagicLink = z.object({
-  email: z.string({
-    invalid_type_error: 'Invalid Email',
-  }),
+  email: z
+    .string({
+      invalid_type_error: 'Invalid Email',
+    })
+    .min(1, {
+      message: 'Email is required.',
+    }),
 });
 
 export async function sendMagicLink(formData: FormData) {
@@ -63,7 +70,11 @@ export async function sendMagicLink(formData: FormData) {
   // Return early if the form data is invalid
   if (!validatedFields.success) {
     return redirect(
-      `/auth-error?message=${validatedFields.error.flatten().fieldErrors}`,
+      `/auth-error?message=${logErrorMessages(
+        validatedFields.error.flatten().fieldErrors as {
+          string: string[];
+        },
+      )}`,
     );
   }
 
@@ -78,8 +89,10 @@ export async function sendMagicLink(formData: FormData) {
   return redirect(`/auth-success?email=${formData.get('email')}`);
 }
 
-export async function resendMagicLinkAction(email: string) {
-  if (!email) return { status: 'error' };
+export async function resendMagicLinkAction(
+  email: string,
+): Promise<ActionResponse> {
+  if (!email) return { status: 'error', message: null };
 
   const supabase = await createClient();
 
@@ -88,5 +101,5 @@ export async function resendMagicLinkAction(email: string) {
   if (error) {
     return { status: 'error', message: error.message };
   }
-  return { status: 'success' };
+  return { status: constants('STATUS_SUCCESS'), message: null };
 }

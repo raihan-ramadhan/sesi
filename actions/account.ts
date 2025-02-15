@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { User, GENDER_VALUES } from '@/types/auth';
 import { getUserProfiles } from './user-profiles';
 import constants from '@/utils/constants';
+import { logErrorMessages } from '@/utils/utils';
+import { ActionResponse, ActionResponseWithData } from '@/types/global';
 
 const schemaAccount = z.object({
   userName: z
@@ -25,19 +27,30 @@ const schemaAccount = z.object({
     .or(z.literal('')),
 });
 
-export async function getAccountData() {
+export async function getAccountData(): Promise<ActionResponseWithData<User>> {
   const session = await getUserSession();
   // return not authenticated user
   if (!session) {
-    return { status: 'error', message: 'User is not authenticated' };
+    return {
+      status: 'error',
+      message: 'User is not authenticated',
+      data: null,
+    };
   }
 
-  const userProfiles = await getUserProfiles(session?.user.email as string);
-  if (userProfiles.status !== 'success') {
-    return { status: 'error', message: userProfiles.message };
+  const { status, message, data } = await getUserProfiles(
+    session?.user.email as string,
+  );
+
+  if (!data) {
+    return { status, message, data: null };
   }
 
-  return { status: 'success', data: userProfiles.data };
+  return {
+    status: constants('STATUS_SUCCESS'),
+    data,
+    message: null,
+  };
 }
 
 export async function updateAccountData({
@@ -46,7 +59,7 @@ export async function updateAccountData({
 }: {
   formData: FormData;
   oldData: User;
-}) {
+}): Promise<ActionResponseWithData<User>> {
   const validatedFields = schemaAccount.safeParse({
     userName: formData.get('userName'),
     gender: formData.get('gender'),
@@ -57,7 +70,12 @@ export async function updateAccountData({
   if (!validatedFields.success) {
     return {
       status: 'error',
-      message: validatedFields.error.flatten().fieldErrors,
+      message: logErrorMessages(
+        validatedFields.error.flatten().fieldErrors as {
+          string: string[];
+        },
+      ),
+      data: null,
     };
   }
 
@@ -73,13 +91,21 @@ export async function updateAccountData({
     payload.gender = validatedData.gender;
 
   if (Object.keys(payload).length === 0) {
-    return { status: 'error', message: 'Tolong lakukan sebuah perubahan' };
+    return {
+      status: 'error',
+      message: 'Tolong lakukan sebuah perubahan',
+      data: null,
+    };
   }
 
   const isAuthenticated = await getUserSession();
   // return not authenticated user
   if (!isAuthenticated) {
-    return { status: 'error', message: 'User is not authenticated' };
+    return {
+      status: 'error',
+      message: 'User is not authenticated',
+      data: null,
+    };
   }
 
   const supabase = await createClient();
@@ -91,8 +117,8 @@ export async function updateAccountData({
     .single();
 
   if (updateError) {
-    return { status: 'error', message: updateError.message };
+    return { status: 'error', message: updateError.message, data: null };
   }
 
-  return { status: 'success', data };
+  return { status: constants('STATUS_SUCCESS'), data, message: null };
 }

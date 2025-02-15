@@ -3,17 +3,16 @@
 import { SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import UploadAvatar from '@/components/account/UploadAvatar';
 import UploadBanner from '@/components/account/UploadBanner';
-import { GENDER_VALUES, Role, User } from '@/types/auth';
+import { GENDER_VALUES, User } from '@/types/auth';
 import { updateAccountData } from '@/actions/account';
 import { Separator } from '@/components/ui/separator';
 import { useUserStore } from '@/stores/useUserStore';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
-import { toProperCase } from '@/lib/utils';
+import { useEffect, useTransition } from 'react';
+import { toProperCase } from '@/utils/utils';
 import { useFormStatus } from 'react-dom';
-import { SaveIcon } from 'lucide-react';
+import { LoaderCircle, SaveIcon } from 'lucide-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -29,45 +28,53 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import constants from '@/utils/constants';
+import useToastResult from '@/hooks/use-toast-result';
 
 export const AccountPage = ({ initialData }: { initialData: User }) => {
+  const [isPending, startTransition] = useTransition();
+
   const { user, setUser } = useUserStore();
-  const [role, setRole] = useState<Role>('USER');
   const bannerHeight = 'h-48 ';
   const { pending } = useFormStatus();
-  const { toast } = useToast();
+  const { toastResHandler } = useToastResult();
   function properValue(value: string) {
     const newValue = toProperCase(value.replaceAll('_', ' '));
     return newValue;
   }
 
   const formAction = async (formData: FormData) => {
-    const { status, message, data } = await updateAccountData({
-      oldData: initialData,
-      formData,
+    startTransition(async () => {
+      try {
+        const { status, message, data } = await updateAccountData({
+          oldData: initialData,
+          formData,
+        });
+
+        if (status == constants('STATUS_SUCCESS') && data) {
+          // SUCCESS HANDLING
+          toastResHandler({
+            status: constants('STATUS_SUCCESS'),
+            successMessage: 'Kamu berhasil mengupdate data akun kamu',
+          });
+
+          setUser(data);
+        } else if (message) {
+          // SERVER ERROR HANDLING
+          toastResHandler({ status: 'error', error: message });
+        }
+      } catch (error: unknown) {
+        // CLIENT ERROR HANDLING
+        toastResHandler({ status: 'error', error: error });
+      }
     });
-
-    if (status == 'success' && data) {
-      toast({
-        title: 'Sukses!',
-        description: 'Kamu berhasil mengupdate data akun kamu',
-      });
-
-      setUser(data);
-    } else if (message) {
-      toast({
-        variant: 'destructive',
-        title: 'Gagal!',
-        description:
-          (message as string) || 'terjadi Kesalahan saat mengupdate!',
-      });
-    }
   };
 
   useEffect(() => {
     return () => {
       setUser(initialData);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -162,30 +169,21 @@ export const AccountPage = ({ initialData }: { initialData: User }) => {
             />
           </div>
 
-          {/* Phone Number Input */}
-          {/* <div className="grid gap-2">
-              <Label htmlFor="phoneNumber">No telp</Label>
-              <Input
-                id="phoneNumber"
-                maxLength={320}
-                placeholder="08- Atau 628-"
-                onChange={(e) =>
-                  setUser((prev) => ({ ...prev, phoneNumber: e.target.value }))
-                }
-                type="text"
-                value={user.phoneNumber ?? ''}
-                disabled={isPending}
-                required
-              />
-            </div> */}
-
           {/* Submit Button */}
           <button
             type="submit"
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center gap-1"
           >
-            <SaveIcon className="size-5" />
-            Simpan
+            {isPending ? (
+              <>
+                <LoaderCircle className="size-5 animate-spin" />
+                Menyimpan
+              </>
+            ) : (
+              <>
+                <SaveIcon className="size-5" /> Simpan
+              </>
+            )}
           </button>
         </div>
       </form>

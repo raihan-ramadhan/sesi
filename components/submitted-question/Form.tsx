@@ -1,9 +1,4 @@
-'use client';
-
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { SubCategory } from './SubCategory';
+import React, { useTransition } from 'react';
 import {
   Select,
   SelectContent,
@@ -11,11 +6,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { submitAQuestionAction } from '@/actions/submit-a-question';
-import { CATEGORIES_VALUES, schemaQuestion } from '@/types/question';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import {
   Form,
   FormControl,
@@ -26,76 +16,41 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { UploadQuestionImage } from './UploadImage';
-import { useEffect, useState } from 'react';
-import useLocalStorage from '@/hooks/use-local-storage';
-import { useToast } from '@/hooks/use-toast';
-import { logErrorMessages } from '@/lib/utils';
 import { WrongAnswers } from './WrongAnswers';
-import { FormLoadingState } from './FormLoadingState';
-import { useRouter } from 'next/navigation';
+import { CATEGORIES_VALUES, schemaQuestion } from '@/types/question';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Textarea } from '../ui/textarea';
+import { Input } from '../ui/input';
+import { SubCategory } from './SubCategory';
+import { Button } from '../ui/button';
+import { LoaderCircle, SaveIcon } from 'lucide-react';
 
-const DEFAULT_VALUE = {
-  image: undefined,
-  category: undefined as any,
-  questionLine: '',
-  rightAnswer: '',
-  wrongAnswer1: '',
-  wrongAnswer2: '',
-  wrongAnswer3: '',
-  wrongAnswer4: '',
-  subCategory: '',
-};
-
-export const FormSubmitQuestion = () => {
-  const { toast } = useToast();
-  const [isMounted, setIsMounted] = useState(false);
-  const [savedFormData, setSavedFormData, clearSavedFormData] = useLocalStorage<
-    z.infer<typeof schemaQuestion>
-  >('formData', DEFAULT_VALUE);
-  const router = useRouter();
-
+export const QuestionForm = ({
+  onSubmit,
+  initialData,
+  saveCallback,
+}: {
+  onSubmit: (values: z.infer<typeof schemaQuestion>) => Promise<void>;
+  initialData: z.infer<typeof schemaQuestion>;
+  saveCallback?: (
+    name: keyof z.infer<typeof schemaQuestion>,
+    value: string | File,
+  ) => void;
+}) => {
+  const [isPending, startTransition] = useTransition();
   const myForm = useForm<z.infer<typeof schemaQuestion>>({
     resolver: zodResolver(schemaQuestion),
-    defaultValues: savedFormData,
+    defaultValues: initialData,
   });
-
-  async function onSubmit(values: z.infer<typeof schemaQuestion>) {
-    const { status, message, errorType } = await submitAQuestionAction(values);
-
-    // ERROR HANDLING
-    if (status !== 'success') {
-      if (errorType === 'zod-error') {
-        toast({
-          variant: 'destructive',
-          title: 'Gagal!',
-          description: logErrorMessages(message) ?? 'Terjadi sebuah kesalahan',
-        });
-        return;
-      }
-
-      toast({
-        variant: 'destructive',
-        title: 'Gagal!',
-        description:
-          typeof message === 'string' ? message : 'Terjadi sebuah kesalahan',
-      });
-
-      return;
-    }
-
-    // SUCCESS HANDLING
-    clearSavedFormData();
-    myForm.reset();
-    router.push('/submitted-questions');
-  }
 
   const save = (
     name: keyof z.infer<typeof schemaQuestion>,
     value: string | File,
   ) => {
-    const updatedFormData = { ...savedFormData, [name]: value };
-    setSavedFormData(updatedFormData);
     myForm.setValue(name, value);
+    if (saveCallback) saveCallback(name, value);
   };
 
   const handleChange = (
@@ -112,18 +67,21 @@ export const FormSubmitQuestion = () => {
     save(name as keyof z.infer<typeof schemaQuestion>, value);
   };
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) {
-    // LOADING STATE
-    return <FormLoadingState />;
-  }
-
   return (
     <Form {...myForm}>
-      <form onSubmit={myForm.handleSubmit(onSubmit)}>
+      {/* <form onSubmit={myForm.handleSubmit(onSubmit)}> */}
+      <form
+        onSubmit={myForm.handleSubmit(async (values) => {
+          startTransition(async () => {
+            try {
+              onSubmit(values);
+            } catch (error: unknown) {
+              // ERROR CLIENT HANDLING
+              console.log(error);
+            }
+          });
+        })}
+      >
         <div className="flex flex-col gap-5">
           {/* TEXTAREA INPUT */}
           <FormField
@@ -139,7 +97,9 @@ export const FormSubmitQuestion = () => {
                     onChange={handleChange}
                   />
                 </FormControl>
-                <FormDescription>This is your Question's Line.</FormDescription>
+                <FormDescription>
+                  This is your Question&apos;s Line.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -147,9 +107,10 @@ export const FormSubmitQuestion = () => {
 
           {/* UPLOAD IMAGE INPUT */}
           <UploadQuestionImage
-            control={myForm.control}
-            name={'image'}
+            imageName={'image'}
+            imageUrlName={'imageUrl'}
             myForm={myForm}
+            imageUrl={initialData.imageUrl}
           />
 
           {/* RIGHT ANSWER INPUT */}
@@ -211,7 +172,7 @@ export const FormSubmitQuestion = () => {
                   </Select>
                 </FormControl>
                 <FormDescription>
-                  This is your Question's Category.
+                  This is your Question&apos;s Category.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -221,13 +182,23 @@ export const FormSubmitQuestion = () => {
           {/* SUBCATEGORY DROPDOWN INPUT */}
           <SubCategory
             control={myForm.control}
-            name={'subCategory' as const}
+            name={'subCategory'}
             value={myForm.watch('subCategory')}
             setValue={myForm.setValue}
             handleChange={handleChange}
           />
-          <Button type="submit" className="w-full">
-            Submit
+          <Button type="submit" className="w-full gap-1" disabled={isPending}>
+            {isPending ? (
+              <>
+                <LoaderCircle className="animate-spin" />
+                Saving
+              </>
+            ) : (
+              <>
+                <SaveIcon />
+                Submit
+              </>
+            )}
           </Button>
         </div>
       </form>

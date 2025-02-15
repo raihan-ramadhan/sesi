@@ -9,81 +9,128 @@ import {
 } from '../ui/form';
 import { Input } from '../ui/input';
 import { schemaQuestion } from '@/types/question';
-import { Control, UseFormReturn } from 'react-hook-form';
+import { UseFormReturn } from 'react-hook-form';
 import Image from 'next/image';
-import { Trash } from 'lucide-react';
+import { MoreVertical, Pen, Trash } from 'lucide-react';
 import { useRef, useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
 export const UploadQuestionImage = ({
-  control,
-  name,
+  imageName,
+  imageUrlName,
   myForm,
+  imageUrl,
 }: {
-  name: keyof z.infer<typeof schemaQuestion>;
-  control: Control<z.infer<typeof schemaQuestion>, any>;
+  imageName: keyof Pick<z.infer<typeof schemaQuestion>, 'image'>;
+  imageUrlName: keyof Pick<z.infer<typeof schemaQuestion>, 'imageUrl'>;
   myForm: UseFormReturn<z.infer<typeof schemaQuestion>>;
+  imageUrl: string;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string>();
+  const [preview, setPreview] = useState<string>(imageUrl);
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setPreview(URL.createObjectURL(file));
-      myForm.setValue(name, file);
+      myForm.setValue(imageName, file);
+      myForm.setValue(imageUrlName, URL.createObjectURL(file));
     }
   };
 
   return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>
-            Image Url <span>*optional</span>
-          </FormLabel>
-          <div className="flex flex-col gap-1">
-            {preview ? (
-              <div className="relative w-fit">
-                <Image
-                  src={preview}
-                  alt={"Question's image"}
-                  width={96}
-                  height={96}
-                  className="w-52 shadow-sm object-cover object-center bg-background"
-                />
-                <div
-                  onClick={() => {
-                    setPreview(undefined);
-                    if (fileInputRef.current) {
-                      fileInputRef.current.value = '';
-                    }
-                    myForm.setValue(name, undefined);
-                  }}
-                  className="absolute group top-2 right-2 cursor-pointer bg-black/10 hover:bg-destructive backdrop-blur-sm p-1.5 rounded-sm"
-                >
-                  <Trash size={18} className="text-white" />
-                </div>
-              </div>
-            ) : null}
-
+    <>
+      <FormField
+        name="imageUrl"
+        control={myForm.control}
+        render={({ field }) => (
+          <FormItem>
             <FormControl>
-              <Input
+              <input
                 {...field}
-                placeholder="Write Your Question..."
-                value={undefined}
-                ref={fileInputRef}
-                onChange={handleProfilePicChange}
-                accept="image/jpeg, image/png, image/webp"
-                type="file"
+                type="url"
+                className="hidden"
+                value={preview}
+                name="imageUrl"
+                readOnly
               />
             </FormControl>
-          </div>
-          <FormDescription>This is your Question's Image.</FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={myForm.control}
+        name={imageName}
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>
+              Image Url <span>*optional</span>
+            </FormLabel>
+            <div className="flex flex-col gap-1">
+              {!!preview ? (
+                <div className="relative w-fit">
+                  <Image
+                    src={preview}
+                    alt={"Question's image"}
+                    width={96}
+                    height={96}
+                    className="h-52 w-fit shadow-sm object-cover object-center bg-background"
+                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="absolute group top-1 right-1 bg-black/10 backdrop-blur-sm rounded-sm">
+                      <MoreVertical />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (fileInputRef.current)
+                            fileInputRef.current.click();
+                        }}
+                      >
+                        <Pen size={18} />
+                        Change
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setPreview('');
+                          myForm.setValue(imageUrlName, '');
+                          myForm.setValue(imageName, undefined);
+                          if (fileInputRef.current)
+                            fileInputRef.current.value = '';
+                        }}
+                      >
+                        <Trash size={18} />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : null}
+
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="Write Your Question..."
+                  value={undefined}
+                  ref={fileInputRef}
+                  onChange={handleProfilePicChange}
+                  accept="image/jpeg, image/png, image/webp"
+                  type="file"
+                />
+              </FormControl>
+            </div>
+            <FormDescription>
+              This is your Question&apos;s Image.
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </>
   );
 };

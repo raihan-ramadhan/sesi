@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +21,12 @@ export function LoginForm({
     <form
       action={(formData: FormData) => {
         startTransitionSendMagic(async () => {
-          await sendMagicLink(formData);
+          try {
+            await sendMagicLink(formData);
+          } catch (error: unknown) {
+            // ERROR CLIENT HANDLING
+            console.log(error);
+          }
         });
       }}
       className={cn('flex flex-col gap-6', className)}
@@ -50,7 +55,11 @@ export function LoginForm({
             required
           />
         </div>
-        <Button type="submit" className="w-full">
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={sendMagicPending || googlePending}
+        >
           {sendMagicPending ? (
             <LoaderCircle className="animate-spin" />
           ) : (

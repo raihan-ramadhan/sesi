@@ -15,21 +15,22 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { MoreButtonTable } from './MoreButtonTable';
+import { useState } from 'react';
+import { QuestTable } from '@/types/question';
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-}
-
-export function DataTable<TData, TValue>({
+export function DataTable({
   columns,
-  data,
-}: DataTableProps<TData, TValue>) {
+  data: initialData,
+}: {
+  columns: ColumnDef<QuestTable>[];
+  data: QuestTable[];
+}) {
+  const [data, setData] = useState<QuestTable[]>(() => [...initialData]);
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    meta: { setData },
   });
 
   return (
@@ -71,9 +72,6 @@ export function DataTable<TData, TValue>({
                       </TableCell>
                     );
                   })}
-                  <TableCell>
-                    <MoreButtonTable />
-                  </TableCell>
                 </TableRow>
               );
             })

@@ -43,7 +43,7 @@ const ComingSoonPage = async ({
           page.
         </p>
         <p className="text-lbase text-blue-600">
-          We'll be launching soon, Stay Tuned!
+          We&apos;ll be launching soon, Stay Tuned!
         </p>
       </div>
     </div>

@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { resendMagicLinkAction } from '@/actions/auth';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/utils';
 import Link from 'next/link';
 import { useActionState } from 'react';
+import constants from '@/utils/constants';
+import useToastResult from '@/hooks/use-toast-result';
 
 export function ResendMagicLink() {
   const initialCount = 60;
@@ -14,7 +15,7 @@ export function ResendMagicLink() {
   const btnId = 'sendLink';
   const searchParams = useSearchParams();
   const email = searchParams.get('email') as string;
-  const { toast } = useToast();
+  const { toastResHandler } = useToastResult();
 
   const initialState = {
     message: '',
@@ -30,24 +31,19 @@ export function ResendMagicLink() {
     if (pending) {
       setTimeLeft(initialCount); //start countdown again
     } else {
-      if (state.status === 'success') {
-        toast({
-          title: 'Sukses!',
-          description: 'Magic link sudah dikirim lagi ke email kamu.',
+      if (state.status === constants('STATUS_SUCCESS')) {
+        toastResHandler({
+          status: constants('STATUS_SUCCESS'),
+          successMessage: 'Magic link sudah dikirim lagi ke email kamu.',
         });
       } else if (state.status === 'error') {
-        toast({
-          variant: 'destructive',
-          title: 'Uh oh! Terjadi kesalahan.',
-          description: 'Ada kesalahan dengan permintaan request kamu.',
-        });
-
-        console.error(state?.message);
+        toastResHandler({ status: 'error' });
       }
     }
 
     state.status = '';
     state.message = '';
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending]);
 
   useEffect(() => {
@@ -66,7 +62,7 @@ export function ResendMagicLink() {
     <form action={formAction}>
       {email ? (
         <div className="text-sm text-gray-600">
-          Didn't receive an email? To send the magic link again,{' '}
+          Didn&apos;t receive an email? To send the magic link again,{' '}
           <button
             type="submit"
             id={btnId}
@@ -84,7 +80,8 @@ export function ResendMagicLink() {
         </div>
       ) : (
         <p className="text-sm text-gray-600">
-          Didn't receive an email? To go back to sign in page and try again,{' '}
+          Didn&apos;t receive an email? To go back to sign in page and try
+          again,{' '}
           <Link href="/sign-in" className="text-blue-500 hover:underline">
             Click Here
           </Link>

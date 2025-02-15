@@ -4,12 +4,19 @@ import { createClient } from '@/utils/supabase/server';
 import { getUserSession } from './auth';
 import { User } from '@/types/auth';
 import constants from '@/utils/constants';
+import { ActionResponseWithData } from '@/types/global';
 
-export async function getUserProfiles(email: string) {
+export async function getUserProfiles(
+  email: string,
+): Promise<ActionResponseWithData<User>> {
   const isAuthenticated = await getUserSession();
   // return not authenticated user
   if (!isAuthenticated) {
-    return { status: 'error', message: 'User is not authenticated' };
+    return {
+      status: 'error',
+      message: 'User is not authenticated',
+      data: null,
+    };
   }
 
   const supabase = await createClient();
@@ -22,8 +29,12 @@ export async function getUserProfiles(email: string) {
     .single();
 
   if (error) {
-    return { status, message: error.message };
+    return { status, message: error.message, data: null };
   }
 
-  return { status: 'success', data: data as User };
+  return {
+    status: constants('STATUS_SUCCESS'),
+    data: data as User,
+    message: null,
+  };
 }
