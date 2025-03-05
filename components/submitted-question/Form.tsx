@@ -83,6 +83,45 @@ export const QuestionForm = ({
         })}
       >
         <div className="flex flex-col gap-5">
+          {/* CATEGORY INPUT */}
+          <FormField
+            control={myForm.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel htmlFor="category">Category</FormLabel>
+                <FormControl>
+                  <Select
+                    {...field}
+                    onValueChange={(value) =>
+                      handleSelectChange('category', value)
+                    }
+                  >
+                    <SelectTrigger
+                      id="category"
+                      className="min-w-[180px] w-full placeholder:text-red-300"
+                    >
+                      <SelectValue placeholder="Select a Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES_VALUES.map((value, index) => {
+                        return (
+                          <SelectItem key={index} value={value}>
+                            {value}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription>
+                  This is your Question&apos;s Category.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* TEXTAREA INPUT */}
           <FormField
             control={myForm.control}
@@ -121,11 +160,16 @@ export const QuestionForm = ({
               <FormItem>
                 <FormLabel>Right Answer</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Write Your Right Answer..."
-                    {...field}
-                    onChange={handleChange}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Write Your Right Answer..."
+                      {...field}
+                      onChange={handleChange}
+                    />
+                    <div className="border border-input rounded-md w-fit whitespace-nowrap px-3 flex items-center justify-center">
+                      5 Point
+                    </div>
+                  </div>
                 </FormControl>
                 <FormDescription>This is your Right Answer.</FormDescription>
                 <FormMessage />
@@ -138,45 +182,6 @@ export const QuestionForm = ({
             errors={myForm.formState.errors}
             myForm={myForm}
             handleChange={handleChange}
-          />
-
-          {/* CATEGORY INPUT */}
-          <FormField
-            control={myForm.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor="category">Category</FormLabel>
-                <FormControl>
-                  <Select
-                    {...field}
-                    onValueChange={(value) =>
-                      handleSelectChange('category', value)
-                    }
-                  >
-                    <SelectTrigger
-                      id="category"
-                      className="min-w-[180px] w-full placeholder:text-red-300"
-                    >
-                      <SelectValue placeholder="Select a Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES_VALUES.map((value, index) => {
-                        return (
-                          <SelectItem key={index} value={value}>
-                            {value}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormDescription>
-                  This is your Question&apos;s Category.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
           />
 
           {/* SUBCATEGORY DROPDOWN INPUT */}

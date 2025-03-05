@@ -63,12 +63,22 @@ export function WrongAnswers({
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <Input
-                      placeholder="Write Your Wrong Answer no 1..."
-                      {...field}
-                      id={name}
-                      onChange={handleChange}
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder={`Write Your Wrong Answer no ${index + 1}...`}
+                        {...field}
+                        id={name}
+                        onChange={handleChange}
+                      />
+                      <div className="border border-input rounded-md w-fit whitespace-nowrap px-3 flex items-center gap-1 justify-center">
+                        {myForm.watch('category') === 'TKP' ? (
+                          <span>{index + 1}</span>
+                        ) : (
+                          <span>0</span>
+                        )}
+                        Point
+                      </div>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

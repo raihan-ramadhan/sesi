@@ -49,12 +49,11 @@ export const UploadQuestionImage = ({
         name="imageUrl"
         control={myForm.control}
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="hidden !py-0">
             <FormControl>
               <input
                 {...field}
                 type="url"
-                className="hidden"
                 value={preview}
                 name="imageUrl"
                 readOnly
